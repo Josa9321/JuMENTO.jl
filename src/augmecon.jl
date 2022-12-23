@@ -1,4 +1,5 @@
 import Combinatorics: permutations
+using JuMP
 include("non_dominated_with_sol.jl")
 
 function fix_table_value(model, objective, numIt, time, gap)
@@ -33,16 +34,13 @@ function lexicographic!(model, objectives, objectives_found, solutions_found; re
     return table, time, gap, numIt
 end
 
-function eps_con(model::Model, objectives, grid_points; 
-    rm_equals = remove_equal_solutions, register_solution = register_solution_pmsp)
-    
-    penalty = 1e-3
+function AUGMECON(model::Model, objectives, grid_points; 
+    rm_equals, register_solution, penalty = 1e-3)
     O = 2:length(objectives)
     objectives_found = Vector{Float64}[]
-    solutions_found = [] # SolutionFromModel{Int64, Float64}
+    solutions_found = []
     table, time, gap, numIt = lexicographic!(model, objectives, objectives_found, solutions_found, register_solution = register_solution)
     gap = 0.0 # I won't collect lexicographic gaps
-    # objective_values = [range(minimum(table[:, o]), stop = maximum(table[:, o]), length = (maximum(table[:, o]) - minimum(table[:, o]) > 0.0 ? grid_points+2 : 1)) for o in 1:O[end]]
     maximum_o = [maximum(table[:, o]) for o in 1:O[end]]
     minimum_o = [minimum(table[:, o]) for o in 1:O[end]]
     objective_range = [maximum_o[o] - minimum_o[o] for o in 1:O[end]]

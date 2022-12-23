@@ -8,3 +8,10 @@ mutable struct AuxAUGMECON{M, Vars, Cons, Function, N <: Integer, F <: AbstractF
     time::F
     gap::F
 end
+
+mutable struct AugmeconModel
+    model
+    numIterations
+    time
+    gap
+end

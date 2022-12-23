@@ -1,11 +1,11 @@
 function max_j_dominates_i(objectives_found_i, objectives_found_j)
-    # Maximize objective
     num_objs = length(objectives_found_i)
     at_least_better_in_one = false
     as_good_in_all = true
     for o in Base.OneTo(num_objs)
         if objectives_found_j[o] < objectives_found_i[o]
             as_good_in_all = false
+            break
         elseif objectives_found_j[o] > objectives_found_i[o]
             at_least_better_in_one = true
         end
