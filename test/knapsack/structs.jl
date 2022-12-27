@@ -1,5 +1,5 @@
 struct KnapsackVariables{F <: AbstractFloat} <: VariablesJuMP
-    x::Matrix{F}
+    x::Vector{F}
 end
 
 struct KnapsackInstance{F <: AbstractFloat, R <: AbstractRange}

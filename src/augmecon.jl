@@ -1,15 +1,32 @@
 import Combinatorics: permutations
 using JuMP
-include("non_dominated_with_sol.jl")
 
-function fix_table_value(model, objective, numIt, time, gap)
-    @objective(model, Max, objective)
-    optimize!(model)
-    numIt += 1
-    time += solve_time(model)
-    gap += relative_gap(model)
-    set_lower_bound(objective, objective_value(model))
-    return numIt, time, gap
+function solve_by_augmecon(model::Model, objectives; 
+    grid_points, rm_equals, register_solution, penalty = 1e-3)
+
+    O = 2:length(objectives)
+    objectives_found = Vector{Float64}[]
+    solutions_found = []
+    table, time, gap, numIt = lexicographic!(model, objectives, objectives_found, solutions_found, register_solution = register_solution)
+    gap = 0.0 # I won't collect lexicographic gaps
+    maximum_o = [maximum(table[:, o]) for o in 1:O[end]]
+    minimum_o = [minimum(table[:, o]) for o in 1:O[end]]
+    objective_range = [maximum_o[o] - minimum_o[o] for o in 1:O[end]]
+    e = [range(minimum_o[o], maximum_o[o], length = (objective_range[o] != 0.0 ? grid_points : 1)) for o in 1:O[end]]
+    @variable(model, s[O] >= 0)
+    @objective(model, Max, objectives[1] + penalty*sum((objective_range[o] > 0.0 ? s[o]/objective_range[o] : 0.0) for o in O))
+    @constraint(model, other_objectives[o in O], objectives[o] - s[o] == 0.0)
+
+    aux_aug = AuxAUGMECON(model, objectives, other_objectives, grid_points, register_solution, numIt, time, gap)
+    recursive_augmecon!(aux_aug, objectives_found, solutions_found, e)
+    
+    aux_aug.gap = aux_aug.gap/aux_aug.numIt # Only mean
+    paretto_solutions, paretto_values = rm_equals(solutions_found, objectives_found)
+    
+    # Since there is a possible gap between the best solution found and the best viable solution,
+    # I need to garantee that I'll save only non dominated solutions
+    paretto_values, paretto_solutions = generate_pareto(paretto_values, paretto_solutions)
+    return paretto_solutions, paretto_values, aux_aug.time, aux_aug.gap
 end
 
 function lexicographic!(model, objectives, objectives_found, solutions_found; register_solution = register_solution_pmsp)
@@ -34,38 +51,21 @@ function lexicographic!(model, objectives, objectives_found, solutions_found; re
     return table, time, gap, numIt
 end
 
-function solve_by_augmecon(model::Model, objectives; 
-    grid_points, rm_equals, register_solution, penalty = 1e-3)
-    O = 2:length(objectives)
-    objectives_found = Vector{Float64}[]
-    solutions_found = []
-    table, time, gap, numIt = lexicographic!(model, objectives, objectives_found, solutions_found, register_solution = register_solution)
-    gap = 0.0 # I won't collect lexicographic gaps
-    maximum_o = [maximum(table[:, o]) for o in 1:O[end]]
-    minimum_o = [minimum(table[:, o]) for o in 1:O[end]]
-    objective_range = [maximum_o[o] - minimum_o[o] for o in 1:O[end]]
-    e = [range(minimum_o[o], maximum_o[o], length = (objective_range[o] != 0.0 ? grid_points : 1)) for o in 1:O[end]]
-    @variable(model, s[O] >= 0)
-    @objective(model, Max, objectives[1] + penalty*sum((objective_range[o] > 0.0 ? s[o]/objective_range[o] : 0.0) for o in O))
-    @constraint(model, other_objectives[o in O], objectives[o] - s[o] == 0.0)
-
-    aux_aug = AuxAUGMECON(model, objectives, other_objectives, grid_points, register_solution, numIt, time, gap)
-    loop_objective_o!(aux_aug, objectives_found, solutions_found, e)
-    
-    aux_aug.gap = aux_aug.gap/aux_aug.numIt # Only mean
-    paretto_solutions, paretto_values = rm_equals(solutions_found, objectives_found)
-    
-    # Since there is a possible gap between the best solution found and the best viable solution,
-    # I need to garantee that I'll save only non dominated solutions
-    paretto_values, paretto_solutions = generate_pareto(paretto_values, paretto_solutions)
-    return paretto_solutions, paretto_values, aux_aug.time, aux_aug.gap
+function fix_table_value(model, objective, numIt, time, gap)
+    @objective(model, Max, objective)
+    optimize!(model)
+    numIt += 1
+    time += solve_time(model)
+    gap += relative_gap(model)
+    set_lower_bound(objective, objective_value(model))
+    return numIt, time, gap
 end
 
-function loop_objective_o!(aux_aug::AuxAUGMECON, objectives_found, solutions_found, e; o = 2)
+function recursive_augmecon!(aux_aug::AuxAUGMECON, objectives_found, solutions_found, e; o = 2)
     for eps in e[o]
         set_normalized_rhs(aux_aug.other_objectives[o], eps) # e[o][i]
         if o < length(aux_aug.objectives)
-            loop_objective_o!(aux_aug, objectives_found, solutions_found, e, o = o + 1)
+            recursive_augmecon!(aux_aug, objectives_found, solutions_found, e, o = o + 1)
         else
             optimize!(aux_aug.model)
             aux_aug.time += solve_time(aux_aug.model)

@@ -1,4 +1,5 @@
 include("structs.jl")
+include("init.jl")
 include("instances.jl")
 include("model.jl")
 include("test.jl")
