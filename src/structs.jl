@@ -8,10 +8,10 @@ mutable struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     gap::F
 end
 
-struct AuxAUGMECON{N <: Integer, F <: AbstractFloat, D}
+struct AuxAUGMECON{N <: Integer, F <: AbstractFloat}
     augmecon_model::AugmeconJuMP{N, F}
-    solution_type::D
     grid_points::N
+    penalty::F
 end
 
 abstract type VariablesJuMP end

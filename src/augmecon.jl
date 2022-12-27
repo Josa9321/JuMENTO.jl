@@ -1,8 +1,7 @@
 import Combinatorics: permutations
 using JuMP
 
-function solve_by_augmecon(model::Model, objectives; 
-    grid_points, rm_equals, register_solution, penalty = 1e-3)
+function solve_by_augmecon(model, instance)
 
     O = 2:length(objectives)
     objectives_found = Vector{Float64}[]

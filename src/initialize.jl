@@ -1,9 +1,9 @@
-function set_aux_augmecon(model, objectives; solution_type, grid_points)
+function set_aux_augmecon(model, objectives; solution_type, grid_points, penalty = 1e-3)
     augmecon_model = set_augmecon_model(model, objectives)
     return AuxAUGMECON(
         augmecon_model,
-        solution_type,
-        grid_points
+        grid_points,
+        penalty
     )
 end
 
