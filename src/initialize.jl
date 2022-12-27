@@ -1,4 +1,13 @@
-function augmecon_model(model, objectives)
+function set_aux_augmecon(model, objectives; solution_type, grid_points)
+    augmecon_model = set_augmecon_model(model, objectives)
+    return AuxAUGMECON(
+        augmecon_model,
+        solution_type,
+        grid_points
+    )
+end
+
+function set_augmecon_model(model, objectives)
     return AugmeconJuMP(
         model,
         objectives,
