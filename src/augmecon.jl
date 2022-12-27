@@ -34,8 +34,8 @@ function lexicographic!(model, objectives, objectives_found, solutions_found; re
     return table, time, gap, numIt
 end
 
-function AUGMECON(model::Model, objectives, grid_points; 
-    rm_equals, register_solution, penalty = 1e-3)
+function solve_by_augmecon(model::Model, objectives; 
+    grid_points, rm_equals, register_solution, penalty = 1e-3)
     O = 2:length(objectives)
     objectives_found = Vector{Float64}[]
     solutions_found = []

@@ -6,7 +6,6 @@ include("non_dominated_with_sol.jl")
 
 include("augmecon.jl")
 
-export AUGMECON
-# Write your package code here.
+export solve_by_augmecon
 
 end
