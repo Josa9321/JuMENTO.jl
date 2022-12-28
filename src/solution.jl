@@ -1,7 +1,7 @@
 function register_solution(aux_augmecon::AuxAUGMECON, instance)
     solution = init_solution(instance, aux_augmecon)
     aux_augmecon.register_variables!(solution, aux_augmecon.augmecon_model, instance)
-    register_objetives!(solution, aux_augmecon.augmecon_model)
+    register_objetives!(solution, aux_augmecon)
     return solution
 end
 
