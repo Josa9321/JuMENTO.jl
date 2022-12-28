@@ -23,7 +23,7 @@ end
 
 function init_solution(instance, aux_augmecon::AuxAUGMECON)
     variables = aux_augmecon.init_variables(instance)
-    objectives = zeros(num_objectives(instance))
+    objectives = zeros(aux_augmecon.num_objectives)
     return SolutionJuMP(variables, objectives)
 end
 

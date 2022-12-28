@@ -12,14 +12,13 @@ include("augmecon.jl")
 
 include("knapsack//load.jl")
 
-export solve_by_augmecon, VariablesJuMP
+export solve_by_augmecon, VariablesJuMP, SolutionJuMP, AugmeconJuMP
 
 end
 
 #===================
-= When using, I need to declare 
+= When using, if I want to save the solution, I need to declare:
  * Variable <: VariablesJuMP
- * num_objectives(instance)
  * init_augmecon_variables(instance)
  * register_variables!(solution, augmecon_model, instance)
 =#
