@@ -14,7 +14,9 @@ function buggy_pareto_set(instances_set)
         pareto_xlsx = load_pareto_xlsx(merge_with_folder(instance_name))
         grid_points = grid_points_xlsx(merge_with_folder(instance_name))
         frontier = generate_frontier(instance_name, grid_points)
-        @assert is_same_frontier(pareto_xlsx, frontier) "The frontiers for $(instance_name) are different"
+        if !(is_same_frontier(pareto_xlsx, frontier)) 
+            println("The frontiers for $(instance_name) are different")
+        end
     end
     return false
 end
@@ -39,16 +41,27 @@ function generate_frontier(instance_name::String, grid_points::Int64)
 end
 
 function is_same_frontier(pareto_xlsx, frontier)
+    if has_not_same_solutions(pareto_xlsx, frontier) || has_not_same_size(pareto_xlsx, frontier)
+        return false
+    end
+    return true
+end
+
+function has_not_same_size(pareto_xlsx, frontier)
+    return length(frontier) != size(pareto_xlsx, 1)
+end
+
+function has_not_same_solutions(pareto_xlsx, frontier)
     for (i, sol_i) in enumerate(frontier)
         for j in axes(pareto_xlsx, 2)
             if abs(sol_i.objectives[j] - pareto_xlsx[i, j]) > 0.5
                 println(sol_i)
-                println("i = $i, j = $j")
-                return false
+                println("i = $i")
+                return true
             end
         end
     end
-    return true
+    return false
 end
 
 function load_payoff_table(instance_address)

@@ -8,15 +8,6 @@ function generate_pareto(frontier)
     return pareto_set
 end
 
-function solution_in_frontier(solution, frontier)
-    for sol_k in frontier
-        if solutions_are_equals(solution, sol_k)
-            return true
-        end
-    end
-    return false
-end
-
 function is_efficient(solution, frontier)
     for sol_k in frontier
         if max_j_dominates_i(solution_i = solution, solution_j = sol_k) && !(solutions_are_equals(solution, sol_k))
@@ -38,6 +29,15 @@ function max_j_dominates_i(;solution_i, solution_j)
         end
     end
     return as_good_in_all && at_least_better_in_one
+end
+
+function solution_in_frontier(solution, frontier)
+    for sol_k in frontier
+        if solutions_are_equals(solution, sol_k)
+            return true
+        end
+    end
+    return false
 end
 
 function solutions_are_equals(solution_1, solution_2)
