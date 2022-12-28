@@ -1,11 +1,15 @@
-function solve_by_augmecon(instance, model, objectives; grid_points, penalty = 1e-3)
-    aux_augmecon = set_aux_augmecon(model, objectives, grid_points = grid_points, penalty = penalty)
+function solve_by_augmecon(instance, model, objectives; grid_points, penalty = 1e-3,
+    init_variables = init_no_variables, register_variables! = register_no_variables!)
+
+    aux_augmecon = set_aux_augmecon(model, objectives, grid_points = grid_points, penalty = penalty, 
+        init_variables = init_variables, register_variables! = register_variables!)
+    
     objectives_rhs = set_objectives_rhs_range(aux_augmecon)
     set_model_for_augmecon!(aux_augmecon, objectives_rhs)
     
     frontier = SolutionJuMP[]
     recursive_augmecon!(aux_augmecon, frontier, objectives_rhs, instance)
-    return frontier
+    return generate_pareto(frontier), aux_augmecon.augmecon_model
 end
 
 function set_objectives_rhs_range(aux_augmecon::AuxAUGMECON)
@@ -74,7 +78,7 @@ function recursive_augmecon!(aux_augmecon::AuxAUGMECON, frontier, objectives_rhs
         else
             optimize_augmecon!(aux_augmecon.augmecon_model)
             if JuMP.has_values(aux_augmecon.augmecon_model.model)
-                push!(frontier, register_solution(aux_augmecon.augmecon_model, instance))
+                push!(frontier, register_solution(aux_augmecon, instance))
             else
                 break
             end

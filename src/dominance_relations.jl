@@ -1,11 +1,20 @@
 function generate_pareto(frontier)
     pareto_set = typeof(frontier[1])[]
     for solution in frontier
-        if is_efficient(solution, frontier)
+        if is_efficient(solution, frontier) && !(solution_in_frontier(solution, pareto_set))
             push!(pareto_set, solution)
         end
     end
     return pareto_set
+end
+
+function solution_in_frontier(solution, frontier)
+    for sol_k in frontier
+        if solutions_are_equals(solution, sol_k)
+            return true
+        end
+    end
+    return false
 end
 
 function is_efficient(solution, frontier)
