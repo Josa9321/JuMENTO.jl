@@ -1,11 +1,17 @@
-# module AugmeconMethods
-# include("structs.jl")
-# include("initialize.jl")
-# include("non_dominated_with_sol.jl")
+module AugmeconMethods
 
+using JuMP, XLSX, CPLEX
 
-# include("augmecon.jl")
+import Combinatorics: permutations
 
-# export solve_by_augmecon
+include("structs.jl")
+include("solution.jl")
+include("initialize.jl")
+include("dominance_relations.jl")
+include("augmecon.jl")
 
-# end
+include("knapsack//load.jl")
+
+export solve_by_augmecon
+
+end

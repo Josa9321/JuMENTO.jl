@@ -1,7 +1,5 @@
-using JuMP
-
 mutable struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
-    JuMP_model::Model
+    model::Model
     objectives::Vector{VariableRef}
     iterations_counter::N
     time::F
@@ -12,6 +10,7 @@ struct AuxAUGMECON{N <: Integer, F <: AbstractFloat}
     augmecon_model::AugmeconJuMP{N, F}
     grid_points::N
     penalty::F
+    num_objectives::N
 end
 
 abstract type VariablesJuMP end
