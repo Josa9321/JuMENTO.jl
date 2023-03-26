@@ -9,8 +9,9 @@ include("solution.jl")
 include("initialize.jl")
 include("dominance_relations.jl")
 include("augmecon.jl")
+include("weighted_sum.jl")
 
-export solve_by_augmecon, VariablesJuMP, SolutionJuMP, AugmeconJuMP
+export solve_by_augmecon, VariablesJuMP, SolutionJuMP, AugmeconJuMP, solve_by_weighted_sum
 
 end
 

@@ -21,9 +21,9 @@ function set_augmecon_model(model, objectives)
     )
 end
 
-function init_solution(instance, aux_augmecon::AuxAUGMECON)
-    variables = aux_augmecon.init_variables(instance)
-    objectives = zeros(aux_augmecon.num_objectives)
+function init_solution(instance, aux_method::MultiobjectiveAux)
+    variables = aux_method.init_variables(instance)
+    objectives = zeros(aux_method.num_objectives)
     return SolutionJuMP(variables, objectives)
 end
 

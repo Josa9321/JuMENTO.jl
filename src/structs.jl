@@ -1,3 +1,5 @@
+abstract type MultiobjectiveAux end
+
 mutable struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     model::Model
     objectives::Vector{VariableRef}
@@ -6,7 +8,7 @@ mutable struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     gap::F
 end
 
-struct AuxAUGMECON{N <: Integer, F <: AbstractFloat, M1, M2}
+struct AuxAUGMECON{N <: Integer, F <: AbstractFloat, M1, M2} <: MultiobjectiveAux
     augmecon_model::AugmeconJuMP{N, F}
     grid_points::N
     penalty::F

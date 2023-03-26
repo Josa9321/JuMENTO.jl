@@ -48,7 +48,7 @@ end
 
 function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     @objective(augmecon_model.model, Max, objective)
-    optimize_augmecon!(augmecon_model)
+    optimize_mo_method_model!(augmecon_model)
     set_lower_bound(objective, objective_value(augmecon_model.model))
     return nothing
 end
@@ -76,7 +76,7 @@ function recursive_augmecon!(aux_augmecon::AuxAUGMECON, frontier, objectives_rhs
         if o < aux_augmecon.num_objectives
             recursive_augmecon!(aux_augmecon, frontier, objectives_rhs, instance, o = o + 1)
         else
-            optimize_augmecon!(aux_augmecon.augmecon_model)
+            optimize_mo_method_model!(aux_augmecon.augmecon_model)
             if JuMP.has_values(aux_augmecon.augmecon_model.model)
                 push!(frontier, register_solution(aux_augmecon, instance))
             else
@@ -87,9 +87,9 @@ function recursive_augmecon!(aux_augmecon::AuxAUGMECON, frontier, objectives_rhs
     return nothing
 end
 
-function optimize_augmecon!(augmecon_model::AugmeconJuMP)
-    optimize!(augmecon_model.model)
-    augmecon_model.time += solve_time(augmecon_model.model)
-    augmecon_model.iterations_counter += 1
-    return augmecon_model
+function optimize_mo_method_model!(method_model)
+    optimize!(method_model.model)
+    method_model.time += solve_time(method_model.model)
+    method_model.iterations_counter += 1
+    return method_model
 end
