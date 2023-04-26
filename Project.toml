@@ -11,6 +11,7 @@ JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
+CPLEX = "1"
 julia = "1"
 
 [extras]
