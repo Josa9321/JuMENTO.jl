@@ -1,6 +1,6 @@
-# module AugmeconMethods
+module JUMENTO
 
-using JuMP, XLSX, CPLEX
+using JuMP
 
 import Combinatorics: permutations
 
@@ -9,9 +9,9 @@ include("dominance_relations.jl")
 include("augmecon.jl")
 # include("weighted_sum.jl")
 
-# export solve_by_augmecon, VariablesJuMP, SolutionJuMP, AugmeconJuMP, solve_by_weighted_sum
+export augmecon
 
-# end
+end
 
 #===================
 = When using, if I want to save the solution, I need to declare:
