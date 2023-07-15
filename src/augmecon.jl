@@ -1,20 +1,27 @@
 function augmecon(model, objectives; grid_points, penalty = 1e-3)
+    start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, grid_points; penalty=penalty)
-    table = payoff_table(augmecon_model) 
-    objectives_rhs = set_objectives_rhs_range(augmecon_model, table)
+    payoff_table!(augmecon_model) 
+    objectives_rhs = set_objectives_rhs_range(augmecon_model)
     set_model_for_augmecon!(augmecon_model, objectives_rhs)
     
+    solve_report = augmecon_model.report
+    start_recursion_time = tic()
     frontier = SolutionJuMP[]
     recursive_augmecon!(augmecon_model, frontier, objectives_rhs)
-    return generate_pareto(frontier), augmecon_model, table
+    solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
+    solve_report.counter["total_time"] = toc(start_augmecon_time)
+    return generate_pareto(frontier), solve_report
 end
 
-function payoff_table(augmecon_model::AugmeconJuMP)
+function payoff_table!(augmecon_model::AugmeconJuMP)
     objectives = augmecon_model.objectives
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(augmecon_model.model), objectives)) "At least one objective isn't defined in the model as a constraint"
 
-    table = zeros(num_objectives(augmecon_model), num_objectives(augmecon_model))
+    start_time = tic()
+    solve_report = augmecon_model.report
+    table = solve_report.table
     for (i, obj_higher) in enumerate(objectives)
         optimize_and_fix!(augmecon_model, obj_higher)
         for (o, obj_minor) in enumerate(objectives)
@@ -25,11 +32,14 @@ function payoff_table(augmecon_model::AugmeconJuMP)
         save_on_table!(table, i, augmecon_model)
         delete_lower_bound.(objectives)
     end
+    solve_report.counter["tables_generation_total_time"] = toc(start_time)
     @objective(augmecon_model.model, Max, 0.0)
     return table
 end
 
-function set_objectives_rhs_range(augmecon_model::AugmeconJuMP, table)
+function set_objectives_rhs_range(augmecon_model::AugmeconJuMP)
+    solve_report = augmecon_model.report
+    table = solve_report.table
     O = Base.OneTo(num_objectives(augmecon_model))
     maximum_o = [maximum(table[:, o]) for o in O]
     minimum_o = [minimum(table[:, o]) for o in O]
@@ -44,9 +54,16 @@ function save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
 end
 
 function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
-    @objective(augmecon_model.model, Max, objective)
-    optimize_mo_method_model!(augmecon_model)
-    set_lower_bound(objective, objective_value(augmecon_model.model))
+    model = augmecon_model.model
+    @objective(model, Max, objective)
+    optimize!(model)
+
+    # Save report
+    solve_report = augmecon_model.report
+    solve_report.counter["table_solve_time"] += solve_time(model)
+    # push!(solve_report.table_gap, relative_gap(model))
+
+    set_lower_bound(objective, objective_value(model))
     return nothing
 end
 
@@ -84,9 +101,14 @@ function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_
     return nothing
 end
 
+
 function optimize_mo_method_model!(augmecon_model::AugmeconJuMP)
     optimize!(augmecon_model.model)
-    augmecon_model.report.time += solve_time(augmecon_model.model)
-    augmecon_model.report.iterations_counter += 1
+    augmecon_model.report.counter["solve_time"] += solve_time(augmecon_model.model)
+    augmecon_model.report.counter["iterations"] += 1.0
+    # push!(augmecon_model.report.gap, relative_gap(augmecon_model.model))
     return augmecon_model
 end
+
+tic() = time()
+toc(start_time) = time() - start_time 

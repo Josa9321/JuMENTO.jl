@@ -1,23 +1,29 @@
-mutable struct SolveReport{N <: Integer, F <: AbstractFloat}
-    iterations_counter::N
-    time::F
-    gap::F
+struct SolveReport{F <: AbstractFloat}
+    counter::Dict{String, F}
+    table_gap::Vector{F}
+    gap::Vector{F}
+    table::Matrix{F}
 
-    SolveReport() = new{Int64, Float64}(0, 0.0, 0.0)
+    SolveReport(num_objectives) = new{Float64}(
+        Dict{String, Float64}("iterations" => 0.0, "solve_time" => 0.0, "table_solve_time" => 0.0), 
+        Float64[],
+        Float64[], 
+        zeros(num_objectives, num_objectives)
+    )
 end 
 
 struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     model::Model
     objectives::Vector{VariableRef}
     grid_points::N
-    report::SolveReport{N, F}
+    report::SolveReport{F}
     penalty::F
     
     AugmeconJuMP(model, objectives, grid_points; penalty=1e-3) = new{Int64, Float64}(
         model, 
         objectives, 
         grid_points, 
-        SolveReport(),
+        SolveReport(length(objectives)),
         penalty
     )
 end
