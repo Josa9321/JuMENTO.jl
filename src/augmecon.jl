@@ -1,6 +1,7 @@
-function augmecon(model, objectives; grid_points, penalty = 1e-3)
+function augmecon(model, objectives; grid_points, objective_sense_set, penalty = 1e-3)
+    verify_objectives_sense_set(objective_sense_set, objectives)
     start_augmecon_time = tic()
-    augmecon_model = AugmeconJuMP(model, objectives, grid_points; penalty=penalty)
+    augmecon_model = AugmeconJuMP(model, objectives, grid_points, objective_sense_set; penalty=penalty)
     payoff_table!(augmecon_model) 
     objectives_rhs = set_objectives_rhs_range(augmecon_model)
     set_model_for_augmecon!(augmecon_model, objectives_rhs)
@@ -14,8 +15,16 @@ function augmecon(model, objectives; grid_points, penalty = 1e-3)
     return generate_pareto(frontier), solve_report
 end
 
+function verify_objectives_sense_set(objective_sense_set, objectives)
+    for sense in objective_sense_set
+        @assert (sense == "Max" || sense == "Min") """Objective sense should be "Max" or "Min" """
+    end
+    @assert length(objectives) == length(objective_sense_set) """Number of objectives ($(length(objectives))) is different than the length of objective_sense_set ($(length(objective_sense_set)))"""
+    return nothing
+end
+
 function payoff_table!(augmecon_model::AugmeconJuMP)
-    objectives = augmecon_model.objectives
+    objectives = augmecon_model.objectives_maximize
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(augmecon_model.model), objectives)) "At least one objective isn't defined in the model as a constraint"
 
@@ -48,11 +57,11 @@ end
 
 function save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
     for o in Base.OneTo(num_objectives(augmecon_model))
-        table[i, o] = lower_bound(augmecon_model.objectives[o])
+        table[i, o] = lower_bound(augmecon_model.objectives_maximize[o])
     end
     return table
 end
-
+# objectives = augmecon_model.objectives_maximize
 function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     model = augmecon_model.model
     @objective(model, Max, objective)
@@ -72,11 +81,11 @@ function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs)
     @variable(augmecon_model.model, 
         s[O] >= 0)
         
-    @objective(augmecon_model.model, Max, augmecon_model.objectives[1] + 
+    @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
     augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
     
     @constraint(augmecon_model.model, other_objectives[o in O], 
-        augmecon_model.objectives[o] - s[o] == 0.0)
+        augmecon_model.objectives_maximize[o] - s[o] == 0.0)
     return nothing
 end
 
