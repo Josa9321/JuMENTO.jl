@@ -1,21 +1,15 @@
-function augmecon(model, objectives; grid_points, objective_sense_set, penalty = 1e-3, augmecon_2 = true)
+function augmecon(model, objectives; grid_points, objective_sense_set, penalty = 1e-3)
     verify_objectives_sense_set(objective_sense_set, objectives)
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, grid_points, objective_sense_set; penalty=penalty)
     payoff_table!(augmecon_model) 
     objectives_rhs = set_objectives_rhs_range(augmecon_model)
-    set_model_for_augmecon!(augmecon_model, objectives_rhs, is_augmecon_2 = augmecon_2)
+    set_model_for_augmecon!(augmecon_model, objectives_rhs)
     
     solve_report = augmecon_model.report
     start_recursion_time = tic()
     frontier = SolutionJuMP[]
-    if augmecon_2
-        s_2 = augmecon_model.model[:s][2]
-        recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, s_2 = s_2)
-    else
-        recursive_augmecon!(augmecon_model, frontier, objectives_rhs)
-    end
-
+    recursive_augmecon!(augmecon_model, frontier, objectives_rhs)
     solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
     solve_report.counter["total_time"] = toc(start_augmecon_time)
     convert_table_to_correct_sense!(augmecon_model)
@@ -68,7 +62,7 @@ function save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
     end
     return table
 end
-
+# objectives = augmecon_model.objectives_maximize
 function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     model = augmecon_model.model
     @objective(model, Max, objective)
@@ -83,19 +77,14 @@ function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     return nothing
 end
 
-function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs; is_augmecon_2)
+function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs)
     O = 2:num_objectives(augmecon_model)
     @variable(augmecon_model.model, 
         s[O] >= 0)
         
-    if is_augmecon_2
-        @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10^(2-o)) * s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
-            
-    else
-        @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
-    end
+    @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
+    augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
+    
     @constraint(augmecon_model.model, other_objectives[o in O], 
         augmecon_model.objectives_maximize[o] - s[o] == 0.0)
     return nothing
@@ -103,34 +92,6 @@ end
 
 function objectives_rhs_range(objectives_rhs, o)
     return objectives_rhs[o][end] - objectives_rhs[o][1]
-end
-
-function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = num_objectives(augmecon_model), s_2)
-    i_k = 0
-    while i_k < augmecon_model.grid_points
-        i_k += 1
-        set_normalized_rhs(augmecon_model.model[:other_objectives][o], objectives_rhs[o][i_k])
-        if o > 2
-            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, o = o - 1, s_2 = s_2)
-        else
-            optimize_mo_method_model!(augmecon_model)
-            if JuMP.has_values(augmecon_model.model)
-                push!(frontier, SolutionJuMP(augmecon_model))
-                b = floor(Int64, value(s_2)/objectives_rhs[o].step.hi)
-                i_k += b
-                # if b != 0 && i_k < augmecon_model.grid_points
-                #     println("")
-                #     println(frontier[end].objectives)
-                #     println(" * ", b)
-                #     println(" * ", objectives_rhs[o][i_k-b])
-                #     println(" * ", objectives_rhs[o][i_k])
-                # end
-            else
-                i_k = augmecon_model.grid_points
-            end
-        end
-    end
-    return nothing
 end
 
 function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = 2)

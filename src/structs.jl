@@ -76,7 +76,7 @@ function save_variables!(augmecon_model)
     model_JuMP = augmecon_model.model
     objects_set = model_JuMP.obj_dict
     for k in keys(objects_set)
-        if typeof(objects_set[k]) <: Array{VariableRef} # && objects_set[k] != :objectives_maximize
+        if typeof(objects_set[k]) <: Array{VariableRef} && k != :objectives_maximize
             result[k] = value.(objects_set[k])
         end
     end
