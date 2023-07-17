@@ -1,4 +1,4 @@
-# module JUMENTO
+module JUMENTO
 
 using JuMP
 
@@ -9,6 +9,6 @@ include("dominance_relations.jl")
 include("augmecon.jl")
 include("solve.jl")
 
-# export augmecon
+export augmecon
 
-# end
+end
