@@ -67,6 +67,8 @@ struct SolutionJuMP{V, F <: AbstractFloat}
     end
 end
 
+objectives(solution::SolutionJuMP) = solution.objectives
+
 function save_objetives!(augmecon_model)
     return value.(augmecon_model.objectives)
 end
