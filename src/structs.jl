@@ -45,7 +45,6 @@ end
 function convert_sense_to_num(objective_sense_set)
     result = fill(1.0, length(objective_sense_set))
     for (o, sense) in enumerate(objective_sense_set)
-        println(sense)
         if sense == "Min"
             result[o] = -1.0
         end

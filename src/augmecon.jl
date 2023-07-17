@@ -12,6 +12,7 @@ function augmecon(model, objectives; grid_points, objective_sense_set, penalty =
     recursive_augmecon!(augmecon_model, frontier, objectives_rhs)
     solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
     solve_report.counter["total_time"] = toc(start_augmecon_time)
+    convert_table_to_correct_sense!(augmecon_model)
     return generate_pareto(frontier), solve_report
 end
 
@@ -108,6 +109,17 @@ function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_
         end
     end
     return nothing
+end
+
+function convert_table_to_correct_sense!(augmecon_model::AugmeconJuMP)
+    table = augmecon_model.report.table
+    sense = augmecon_model.sense_value
+    for i in axes(table, 1)
+        for j in axes(table, 2)
+            table[i, j] = table[i, j] * sense[j]
+        end
+    end
+    return table
 end
 
 
