@@ -1,6 +1,6 @@
 module JUMENTO
 
-using JuMP
+using JuMP, DataFrames, XLSX, CSV
 
 import Combinatorics: permutations
 
