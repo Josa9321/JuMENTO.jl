@@ -90,7 +90,7 @@ function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs; i
         
     if is_augmecon_2
         @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10^(2-o)) * s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
+            augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10.0^(2-o)) * s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
             
     else
         @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
