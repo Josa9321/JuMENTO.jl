@@ -3,31 +3,17 @@ using JUMENTO, JuMP
 # include("ignore_for_now//runtests.jl")
 include("test//runtests.jl")
 
-m_simple, obj_simple = simple_triobjective_problem()
-frontier, report = augmecon(m_simple, obj_simple, grid_points = 10, objective_sense_set = ["Min", "Min", "Min"])#["Max", "Max"]);
+m_simple, obj_simple = simple_biobjective_problem()
+frontier, report = augmecon(m_simple, obj_simple, grid_points = 10, objective_sense_set = ["Max", "Max"]);
 nothing
-JUMENTO.save_results_XLSX(frontier, report, file_path = "simple_triobjective")
-JUMENTO.save_results_csv(frontier, report, file_path = "simple_triobjective")
-# convert_frontier_to_objectives_dataframe(frontier, report, file = "biobjective")
+JUMENTO.save_results_XLSX(frontier, report, file_path = "simple_biobjective")
+JUMENTO.save_results_csv(frontier, report, file_path = "simple_biobjective")
 
-# instance_address = "ignore_for_now//knapsack//instances//2kp100.xlsx"
-# instance = KnapsackInstance(instance_address)
-# m_knapsack, objs_knapsack = knapsack_model(instance)
-# frontier_2, report_2 = augmecon(m_knapsack, objs_knapsack, grid_points = 823, objective_sense_set = ["Max", "Max"])
-# convert_frontier_to_objectives_dataframe(frontier_2, report_2, file = "biobjective")
+model_3, objectives_3 = simple_triobjective_problem()
+frontier_3, report_3 = augmecon(model_3, objectives_3, grid_points = 15, objective_sense_set = ["Min", "Min", "Min"])
+JUMENTO.save_results_XLSX(frontier_3, report_3, file_path = "simple_triobjective")
+JUMENTO.save_results_csv(frontier_3, report_3, file_path = "simple_triobjective")
 
-
-# instance_address = "ignore_for_now//knapsack//instances//2kp100.xlsx"
-# instance = KnapsackInstance(instance_address)
-# m_knapsack, objs_knapsack = knapsack_model(instance)
-# frontier_tri, report = augmecon(m_knapsack, objs_knapsack, grid_points = 823, objective_sense_set = ["Max", "Max"], augmecon_2 = false)
-
-# frontier_2, report_2 = augmecon(m_knapsack, objs_knapsack, grid_points = 823, objective_sense_set = ["Max", "Max"])
-
-
-# model_3, objectives_3 = simple_triobjective_problem()
-# frontier_3, report_3 = augmecon(model_3, objectives_3, grid_points = 10, objective_sense_set = ["Min", "Min", "Min"])
-# convert_frontier_to_objectives_dataframe(frontier_3, report_3, file = "triobjective")
 
 # addresses_set = [
 #     "ignore_for_now//knapsack//instances//2kp50.xlsx",

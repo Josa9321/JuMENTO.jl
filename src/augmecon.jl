@@ -116,15 +116,8 @@ function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives
             optimize_mo_method_model!(augmecon_model)
             if JuMP.has_values(augmecon_model.model)
                 push!(frontier, SolutionJuMP(augmecon_model))
-                b = floor(Int64, value(s_2)/objectives_rhs[o].step.hi)
+                b = get_number_of_redundant_iterations(s_2, objectives_rhs[o])
                 i_k += b
-                # if b != 0 && i_k < augmecon_model.grid_points
-                #     println("")
-                #     println(frontier[end].objectives)
-                #     println(" * ", b)
-                #     println(" * ", objectives_rhs[o][i_k-b])
-                #     println(" * ", objectives_rhs[o][i_k])
-                # end
             else
                 i_k = augmecon_model.grid_points
             end
@@ -168,6 +161,16 @@ function optimize_mo_method_model!(augmecon_model::AugmeconJuMP)
     augmecon_model.report.counter["iterations"] += 1.0
     # push!(augmecon_model.report.gap, relative_gap(augmecon_model.model))
     return augmecon_model
+end
+
+function get_number_of_redundant_iterations(s_2, objective_range)
+    division = value(s_2)/objective_range.step.hi
+    return since_solver_could_let_s_2_less_than_zero(division)
+end
+
+function since_solver_could_let_s_2_less_than_zero(b)
+    result = trunc(Int64, b)
+    return result
 end
 
 tic() = time()
