@@ -1,4 +1,4 @@
-using JuMP, Cbc, CPLEX, Gurobi
+using JuMP, Cbc
 
 function simple_biobjective_problem()
     model = init_configured_model()
@@ -62,9 +62,7 @@ end
 
 function init_configured_model()
     result = Model(Cbc.Optimizer)
-    result = Model(CPLEX.Optimizer)
-    result = Model(Gurobi.Optimizer)
-    # set_silent(result)
+    set_optimizer_attribute(result, "logLevel", 0)
     set_time_limit_sec(result, 60.0)
     return result
 end
