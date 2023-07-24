@@ -1,18 +1,18 @@
-using JUMENTO, JuMP
-# include("src//JUMENTO.jl")
+using Jumento, JuMP
+# include("src//Jumento.jl")
 # include("ignore_for_now//runtests.jl")
 include("test//runtests.jl")
 
 m_simple, obj_simple = simple_biobjective_problem()
 frontier, report = augmecon(m_simple, obj_simple, grid_points = 10, objective_sense_set = ["Max", "Max"]);
 nothing
-JUMENTO.save_results_XLSX(frontier, report, file_path = "simple_biobjective")
-JUMENTO.save_results_csv(frontier, report, file_path = "simple_biobjective")
+Jumento.save_results_XLSX(frontier, report, file_path = "simple_biobjective")
+Jumento.save_results_csv(frontier, report, file_path = "simple_biobjective")
 
 model_3, objectives_3 = simple_triobjective_problem()
 frontier_3, report_3 = augmecon(model_3, objectives_3, grid_points = 15, objective_sense_set = ["Min", "Min", "Min"])
-JUMENTO.save_results_XLSX(frontier_3, report_3, file_path = "simple_triobjective")
-JUMENTO.save_results_csv(frontier_3, report_3, file_path = "simple_triobjective")
+Jumento.save_results_XLSX(frontier_3, report_3, file_path = "simple_triobjective")
+Jumento.save_results_csv(frontier_3, report_3, file_path = "simple_triobjective")
 
 
 # addresses_set = [
