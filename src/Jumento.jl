@@ -1,4 +1,4 @@
-module JUMENTO
+module Jumento
 
 using JuMP, DataFrames, XLSX, CSV
 

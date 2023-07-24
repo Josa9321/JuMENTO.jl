@@ -1,4 +1,4 @@
-using JUMENTO
+using Jumento
 
 include("optimization_models.jl")
 
