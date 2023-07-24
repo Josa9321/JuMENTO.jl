@@ -1,0 +1,3 @@
+The instances used in this study were obtained from the following sources:
+    * For the Knapsack Problem (KP) test set, we utilized data from https://github.com/wouterbles/pyaugmecon/.
+    * For the Traveling Salesman Problem (TSP) test set, the data was acquired from https://sites.google.com/site/kflorios/.
