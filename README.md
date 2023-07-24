@@ -1,5 +1,5 @@
 <div align="center">
-<img src="[https://raw.githubusercontent.com/wouterbles/pyaugmecon/main/logo.png](https://github.com/Josa9321/Jumento.jl/blob/main/Jumento.png)" alt="Logo" width="330">
+<img src="https://github.com/Josa9321/Jumento.jl/blob/main/Jumento.png" alt="Logo" width="330">
 </div>
 
 ## Enhancing JuMP with AUGMECON and AUGMECON 2: A Multi-Objective Optimization Implementation
