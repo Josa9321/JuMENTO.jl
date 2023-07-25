@@ -1,5 +1,6 @@
+using CPLEX
 function knapsack_model(instance::KnapsackInstance)
-    model = init_model(gap = 1e-10, time_limit = 50.0, log = 0)
+    model = init_configured_model()
     @variables model begin 
         x[instance.I], Bin
         obj[instance.O]
@@ -13,14 +14,9 @@ function knapsack_model(instance::KnapsackInstance)
     return model, obj
 end
 
-function init_model(;gap, time_limit, log)
-    model = Model(
-        optimizer_with_attributes(CPLEX.Optimizer, 
-            "CPXPARAM_MIP_Tolerances_MIPGap" => gap, 
-            "CPX_PARAM_TILIM" => time_limit, 
-            "CPX_PARAM_SCRIND" => log, 
-            "CPX_PARAM_THREADS" => 2
-        )
-    )
-    return model
+function init_configured_model()
+    result = Model(CPLEX.Optimizer)
+    set_silent(result)
+    set_time_limit_sec(result, 60.0)
+    return result
 end
