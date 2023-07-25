@@ -7,9 +7,9 @@ struct KnapsackInstance{F <: AbstractFloat, R <: AbstractRange}
     O::R
 
     KnapsackInstance(address::String) = begin
-        objectives_coefs = load_knapsack_sheet(address, 3)
-        constraints_coefs = load_knapsack_sheet(address, 1)
-        RHS = load_knapsack_sheet(address, 2)
+        objectives_coefs = load_and_transpose_knapsack_sheet(address, 3)
+        constraints_coefs = load_and_transpose_knapsack_sheet(address, 1)
+        RHS = load_and_transpose_knapsack_sheet(address, 2)
         
         I = Base.OneTo(num_variables(constraints_coefs))
         J = Base.OneTo(num_constraints(RHS))
@@ -26,9 +26,15 @@ struct KnapsackInstance{F <: AbstractFloat, R <: AbstractRange}
     end
 end
 
-function load_knapsack_sheet(address, sheet_number)
+function load_and_transpose_knapsack_sheet(address, sheet_ref)
     # 2:end is to read all the sheet without the indexes
-    return copy(Float64.(XLSX.readxlsx(address)[sheet_number][:][2:end, 2:end])')
+    sheet = load_knapsack_sheet(address, sheet_ref)
+    return copy(sheet')
+end
+
+function load_knapsack_sheet(address, sheet_ref)
+    # 2:end is to read all the sheet without the indexes
+    return Float64.(XLSX.readxlsx(address)[sheet_ref][:][2:end, 2:end])
 end
 
 function num_variables(coefs)
