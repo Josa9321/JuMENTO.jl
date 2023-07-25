@@ -14,13 +14,14 @@ function number_of_grid_points_used(instance_address)
     xf = XLSX.readxlsx(instance_address)
     try 
         sh = xf["e_points"]
-        return size(sh[:][2:end, 2:end], 2)
+        return 10 # size(sh[:][2:end, 2:end], 2)
     catch
         return 5000
     end
 end
 
-address = "test//mokp//instances//3kp50.xlsx"
+address = "test//mokp//instances//2kp50.xlsx"
+a = solve_kp_instance(address, objectives_sense = ["Max" for i in Base.OneTo(2)])
 
 function solve_test(addresses_set=["2kp50.xlsx", "2kp100.xlsx", "2kp250.xlsx"], num_objs=2)
     for address in addresses_set

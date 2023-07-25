@@ -15,7 +15,8 @@ end
 
 function init_configured_model()
     result = Model(HiGHS.Optimizer)
-    set_silent(result)
+    set_attribute(result, "presolve", "on")
+    # set_silent(result)
     set_time_limit_sec(result, 60.0)
     return result
 end

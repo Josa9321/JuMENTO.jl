@@ -156,8 +156,11 @@ end
 
 
 function optimize_mo_method_model!(augmecon_model::AugmeconJuMP)
+    # start_time = tic()
     optimize!(augmecon_model.model)
+    # stop_time = toc(start_time) # Some solvers doesn't work well with solve_time function
     augmecon_model.report.counter["solve_time"] += solve_time(augmecon_model.model)
+    # println(solve_time(augmecon_model.model))
     augmecon_model.report.counter["iterations"] += 1.0
     # push!(augmecon_model.report.gap, relative_gap(augmecon_model.model))
     return augmecon_model
