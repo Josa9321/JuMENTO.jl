@@ -1,6 +1,7 @@
 using Jumento
 
 include("optimization_models.jl")
+include("tests.jl")
 include("mokp//load.jl")
 
 # test_instances(files_names=["2kp50.xlsx", "2kp100.xlsx", "2kp250.xlsx"], num_objs=2,
