@@ -1,4 +1,4 @@
-using JuMP, Cbc
+using JuMP, HiGHS
 
 function simple_biobjective_problem()
     model = init_configured_model()
@@ -61,7 +61,7 @@ function simple_triobjective_problem()
 end
 
 function init_configured_model()
-    result = Model(Cbc.Optimizer)
+    result = Model(HiGHS.Optimizer)
     set_optimizer_attribute(result, "logLevel", 0)
     set_time_limit_sec(result, 60.0)
     return result

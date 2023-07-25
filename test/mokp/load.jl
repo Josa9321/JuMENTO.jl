@@ -1,4 +1,4 @@
-using JuMP, CPLEX, XLSX
+using JuMP, HiGHS, XLSX
 
 include("instance.jl")
 include("model.jl")

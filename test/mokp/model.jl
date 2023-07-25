@@ -1,4 +1,3 @@
-using CPLEX
 function knapsack_model(instance::KnapsackInstance)
     model = init_configured_model()
     @variables model begin 
@@ -15,7 +14,7 @@ function knapsack_model(instance::KnapsackInstance)
 end
 
 function init_configured_model()
-    result = Model(CPLEX.Optimizer)
+    result = Model(HiGHS.Optimizer)
     set_silent(result)
     set_time_limit_sec(result, 60.0)
     return result
