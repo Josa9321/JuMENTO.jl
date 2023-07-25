@@ -9,6 +9,6 @@ include("dominance_relations.jl")
 include("augmecon.jl")
 include("solve_data.jl")
 
-export augmecon, SolutionJuMP, get_objectives
+export augmecon, SolutionJuMP, SolveReport, get_objectives
 
 end
