@@ -21,10 +21,14 @@ function number_of_grid_points_used(instance_address)
 end
 
 address = "test//mokp//instances//3kp50.xlsx"
-result, report = solve_kp_instance(address, objectives_sense = ["Max", "Max"])
 
-function compare_frontier(address)
-    addresses_set = []
+function solve_test(addresses_set=["2kp50.xlsx", "2kp100.xlsx", "2kp250.xlsx"], num_objs=2)
+    for address in addresses_set
+        frontier, report = solve_kp_instance(address, objectives_sense = ["Max" for i in Base.OneTo(num_objs)])
 
+    end
+end
+
+function compare_payoff_table()
 
 end
