@@ -3,7 +3,6 @@ function solve_kp_instance(address; kwargs...)
     model, objs = knapsack_model(instance)
     frontier, report = augmecon(model, objs,
         grid_points = number_of_grid_points_used(address), objective_sense_set = kwargs[:objectives_sense],
-        augmecon_2 = false
     )
     return frontier, report
 end

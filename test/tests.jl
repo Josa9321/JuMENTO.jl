@@ -31,8 +31,14 @@ end
 
 ###########################
 
-function number_of_grid_points_used(instance_address)
-    return size(load_knapsack_sheet(instance_address, "e_points"), 2)
+function number_of_grid_points_used(address)
+    first = findlast("//", address)[end]+1
+    last = findlast(".", address)[end]-1
+    file = address[first:last]
+    grid_points = Dict("2kp50" => 474, "2kp100" => 803, "2kp250" => 2821, "2kp500" => 4690, "2kp750" => 7080,
+    "3kp40" => 421, "3kp50" => 722, "3kp100" => 1094, 
+    "4kp40" => 121, "4kp50" => 56)
+    return grid_points[file]
 end
 
 function is_solution_in_excel_frontier(solution, excel_frontier)

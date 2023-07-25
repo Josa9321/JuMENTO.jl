@@ -19,7 +19,7 @@ function augmecon(model, objectives; grid_points, objective_sense_set, penalty =
     solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
     solve_report.counter["total_time"] = toc(start_augmecon_time)
     convert_table_to_correct_sense!(augmecon_model)
-    return frontier, solve_report # generate_pareto(frontier), solve_report
+    return generate_pareto(frontier), solve_report
 end
 
 function verify_objectives_sense_set(objective_sense_set, objectives)
@@ -109,8 +109,7 @@ function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives
     i_k = 0
     while i_k < augmecon_model.grid_points
         i_k += 1
-        set_normalized_rhs(augmecon_model.model[:other_objectives][o], objectives_rhs[o][i_k]*1.01)
-        println(objectives_rhs[o][i_k])
+        set_normalized_rhs(augmecon_model.model[:other_objectives][o], objectives_rhs[o][i_k])
         if o > 2
             recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, o = o - 1, s_2 = s_2)
         else
