@@ -1,4 +1,48 @@
-function augmecon(model, objectives; grid_points, objective_sense_set, penalty = 1e-3, augmecon_2 = true)
+"""
+    augmecon(model::Model, objectives::Vector{VariableRef}; grid_points::Int64, objective_sense_set::Vector{String} = ["Max" for i in eachindex(objectives)], penalty::Float64 = 1e-3, augmecon_2::Bool = true)
+
+Solve a JuMP model using the AUGMECON method with the specified optimizer.
+
+# Arguments:
+- `model::Model`: The JuMP model to be solved with AUGMECON.
+- `objectives::Vector{VariableRef}`: A vector of variables representing the objectives of the model.
+- `grid_points::Int64`: The number of grid points used in the AUGMECON method.
+- `objective_sense_set::Vector{String}`: A vector of strings specifying the objective senses for each objective. Default value is `["Max" for i in eachindex(objectives)]`, indicating that all objectives are to be maximized. Use `"Max"` for maximization and `"Min"` for minimization.
+- `penalty::Float64`: (Optional) Penalty parameter for AUGMECON method. Default value is `1e-3`, which falls within the recommended interval suggested by the authors, between `1e-3` and `1e-6`.
+- `augmecon_2::Bool`: (Optional) If set to `true` (default), AUGMECON will use its second version (augmecon_2) to solve the model. Set to `false` to use the original AUGMECON algorithm.
+
+# Returns:
+- `frontier`: An array containing the optimal solutions forming the Pareto frontier.
+- `solve_report`: A report containing additional information about the optimization process.
+
+# Examples
+```julia
+using JuMP
+using HiGHS
+
+# Create a JuMP model
+model = Model(HiGHS.Optimizer)
+@variables model begin
+    x[1:2] >= 0
+    objs[1:2]
+end 
+@constraints model begin
+    c1, x[1] <= 20
+    c2, x[2] <= 40
+    c3, 5*x[1] + 4*x[2] <= 200
+    objective_1, objs[1] == x[1]
+    objective_2, objs[2] == 3*x[1] + 4*x[2]
+end
+
+# Solve the model using AUGMECON method
+frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense_set = ["Max", "Max"])
+```
+"""
+function augmecon(model::Model, objectives::Vector{VariableRef}; 
+    grid_points::Int64, objective_sense_set::Vector{String} = ["Max" for i in eachindex(objectives)], 
+    penalty::Float64 = 1e-3, augmecon_2::Bool = true)
+
+    verify_penalty(penalty)
     verify_objectives_sense_set(objective_sense_set, objectives)
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, grid_points, objective_sense_set; penalty=penalty)
@@ -20,6 +64,10 @@ function augmecon(model, objectives; grid_points, objective_sense_set, penalty =
     solve_report.counter["total_time"] = toc(start_augmecon_time)
     convert_table_to_correct_sense!(augmecon_model)
     return generate_pareto(frontier), solve_report
+end
+
+function verify_penalty(penalty)
+    @assert penalty <= 1e-3 || penalty >= 1e-6 "Penalty is outside the interval suggested by the AUGMECON authors 1e-3, 1e-6"
 end
 
 function verify_objectives_sense_set(objective_sense_set, objectives)

@@ -1,3 +1,9 @@
+
+"""
+    SolveReport
+
+It contains 
+"""
 struct SolveReport{F <: AbstractFloat}
     counter::Dict{String, F}
     table_gap::Vector{F}
@@ -54,6 +60,13 @@ end
 
 num_objectives(augmecon_JuMP::AugmeconJuMP) = length(augmecon_JuMP.objectives)
 
+"""
+    struct SolutionJuMP
+
+A `SolutionJuMP` struct represents a solution obtained through the AUGMECON method using a specific solver. It holds the following attributes:
+- `variables::Dict{String, Float64}`: A dictionary containing variable names as keys and their corresponding values from the solution. Each variable name is mapped to its numeric value in the solution.
+- `objectives::Vector{Float64}`: A vector storing the values of the objectives from the solution. Each element in the vector represents the value of an objective in the optimization problem.
+"""
 struct SolutionJuMP{V, F <: AbstractFloat}
     variables::V
     objectives::Vector{F}
