@@ -39,9 +39,9 @@ function number_of_grid_points_used(address)
     first = findlast("//", address)[end]+1
     last = findlast(".", address)[end]-1
     file = address[first:last]
-    grid_points = Dict("2kp100" => 822, "2kp250" => 2533, "2kp500" => 4175, "2kp750" => 7231,)
-    # "3kp40" => 421, "3kp50" => 722, "3kp100" => 1094, 
-    # "4kp40" => 121, "4kp50" => 56)
+    grid_points = Dict("2kp100" => 822, "2kp250" => 2533, "2kp500" => 4175, "2kp750" => 7231,
+    "3kp40" => 420, "3kp50" => 721, "3kp100" => 1093, 
+    "4kp40" => 121, "4kp50" => 56)
     return grid_points[file]
 end
 
