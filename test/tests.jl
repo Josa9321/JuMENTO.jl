@@ -14,8 +14,8 @@ end
 function compare_payoff_table(report::SolveReport, address)
     table = report.table
     excel_table = load_knapsack_sheet(address, "payoff_table")
-    println(excel_table)
-    println(table)
+    # println(excel_table)
+    # println(table)
     for i in eachindex(table)
         @assert isapprox(table[i], excel_table[i]) "Tables are not equals"
     end
