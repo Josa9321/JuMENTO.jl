@@ -13,7 +13,7 @@ end
 
 function compare_payoff_table(report::SolveReport, address)
     table = report.table
-    excel_table = load_excel_table(address)
+    excel_table = load_knapsack_sheet(address, "payoff_table")
     println(excel_table)
     println(table)
     for i in eachindex(table)
@@ -23,7 +23,7 @@ function compare_payoff_table(report::SolveReport, address)
 end
 
 function compare_frontier(frontier, address)
-    excel_pareto = load_knapsack_sheet(address, "frontier")
+    excel_pareto = load_knapsack_sheet(address, "pareto_sols")
     @assert length(frontier) == size(excel_pareto, 1) "Number of solutions are different: num_sol_frontier -> $(length(frontier)), num_excel_pareto -> $(size(excel_pareto, 1))"
     for solution in frontier
         @assert is_solution_in_excel_frontier(solution, excel_pareto) "solution is not in pareto $(solution.objectives)"
@@ -33,15 +33,21 @@ end
 
 ###########################
 
-load_excel_table(address) = load_knapsack_sheet(address, "payoff_table")[:, 2:end]
-
 function number_of_grid_points_used(address)
     first = findlast("//", address)[end]+1
     last = findlast(".", address)[end]-1
     file = address[first:last]
-    grid_points = Dict("2kp100" => 822, "2kp250" => 2533, "2kp500" => 4175, "2kp750" => 7231,
-    "3kp40" => 420, "3kp50" => 721, "3kp100" => 1093, 
-    "4kp40" => 121, "4kp50" => 56)
+    grid_points = Dict("2kp50" => 492, "2kp100" => 823, "2kp250" => 2534,
+        "3kp40" => 540, "3kp50" => 847
+    )
+    return grid_points[file]
+end
+
+function nadir_point(address)
+    first = findlast("//", address)[end]+1
+    last = findlast(".", address)[end]-1
+    file = address[first:last]
+    grid_points = Dict("3kp40" => [1031, 1069], "3kp50" => [1124, 1041])
     return grid_points[file]
 end
 
