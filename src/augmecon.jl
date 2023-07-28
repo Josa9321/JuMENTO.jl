@@ -1,5 +1,5 @@
 """
-    augmecon(model::Model, objectives::Vector{VariableRef}; grid_points::Int64, objective_sense_set::Vector{String} = ["Max" for i in eachindex(objectives)], penalty::Float64 = 1e-3, augmecon_2::Bool = true)
+    augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64)
 
 Solve a JuMP model using the AUGMECON method with the specified optimizer.
 
@@ -38,22 +38,20 @@ end
 frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense_set = ["Max", "Max"])
 ```
 """
-function augmecon(model::Model, objectives::Vector{VariableRef}; 
-    grid_points::Int64, objective_sense_set::Vector{String} = ["Max" for i in eachindex(objectives)], 
-    penalty::Float64 = 1e-3, augmecon_2::Bool = true)
-
-    verify_penalty(penalty)
-    verify_objectives_sense_set(objective_sense_set, objectives)
+function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64; user_options...)
+    # objective_sense_set::Vector{String} = ["Max" for i in eachindex(objectives)], 
+    # penalty::Float64 = 1e-3, augmecon_2::Bool = true)
+    options = augmecon_options(grid_points, length(objectives), user_options) 
     start_augmecon_time = tic()
-    augmecon_model = AugmeconJuMP(model, objectives, grid_points, objective_sense_set; penalty=penalty)
+    augmecon_model = AugmeconJuMP(model, objectives, options)
     payoff_table!(augmecon_model) 
     objectives_rhs = set_objectives_rhs_range(augmecon_model)
-    set_model_for_augmecon!(augmecon_model, objectives_rhs, is_augmecon_2 = augmecon_2)
+    set_model_for_augmecon!(augmecon_model, objectives_rhs, options)
     
     solve_report = augmecon_model.report
     start_recursion_time = tic()
     frontier = SolutionJuMP[]
-    if augmecon_2
+    if options[:bypass]
         s_2 = augmecon_model.model[:s][2]
         recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, s_2 = s_2)
     else
@@ -64,10 +62,6 @@ function augmecon(model::Model, objectives::Vector{VariableRef};
     solve_report.counter["total_time"] = toc(start_augmecon_time)
     convert_table_to_correct_sense!(augmecon_model)
     return generate_pareto(frontier), solve_report
-end
-
-function verify_penalty(penalty)
-    @assert penalty <= 1e-3 || penalty >= 1e-6 "Penalty is outside the interval suggested by the AUGMECON authors 1e-3, 1e-6"
 end
 
 function verify_objectives_sense_set(objective_sense_set, objectives)
@@ -131,18 +125,18 @@ function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     return nothing
 end
 
-function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs; is_augmecon_2)
+function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, options)
     O = 2:num_objectives(augmecon_model)
     @variable(augmecon_model.model, 
         s[O] >= 0.0)
         
-    if is_augmecon_2
+    if options[:bypass]
         @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10.0^float(2-o)) * s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
+            options[:penalty]*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10.0^float(2-o)) * s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
             
     else
         @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            augmecon_model.penalty*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
+            options[:penalty]*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
     end
     @constraint(augmecon_model.model, other_objectives[o in O], 
         augmecon_model.objectives_maximize[o] - s[o] == 0.0)

@@ -66,4 +66,3 @@ function init_configured_model()
     set_time_limit_sec(result, 60.0)
     return result
 end
-

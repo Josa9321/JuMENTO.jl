@@ -25,10 +25,9 @@ struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     sense_value::Vector{F}
     grid_points::N
     report::SolveReport{F}
-    penalty::F
     
-    AugmeconJuMP(model, objectives, grid_points, objective_sense_set; penalty=1e-3) = begin
-        sense_in_num = convert_sense_to_num(objective_sense_set)
+    AugmeconJuMP(model, objectives, options) = begin
+        sense_in_num = convert_sense_to_num(options[:objective_sense_set])
         O = eachindex(objectives)
         @variable(model, objectives_maximize[O])
         @constraints model begin
@@ -40,9 +39,8 @@ struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
             objectives,
             objectives_maximize,
             sense_in_num,
-            grid_points, 
-            SolveReport(length(objectives)),
-            penalty
+            options[:grid_points], 
+            SolveReport(length(objectives))
         )
     end
         

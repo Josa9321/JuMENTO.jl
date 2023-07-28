@@ -6,6 +6,7 @@ import Combinatorics: permutations
 
 include("structs.jl")
 include("dominance_relations.jl")
+include("options.jl")
 include("augmecon.jl")
 include("solve_data.jl")
 
