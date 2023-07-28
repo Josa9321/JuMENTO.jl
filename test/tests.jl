@@ -1,8 +1,8 @@
-function test_instances(; files_names, num_objs, solve_instance, folder)
+function test_instances(; files_names, num_objs, solve_instance, folder, compare_payoff = false)
     for file in files_names
         address = folder*file
         frontier, report = solve_instance(address)
-        compare_payoff_table(report, address)
+        compare_payoff ? compare_payoff_table(report, address) : nothing
         compare_frontier(frontier, address)
         println("Instance $file verified")
     end

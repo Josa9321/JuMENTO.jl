@@ -78,29 +78,33 @@ function get_ideal_point(augmecon_model)
 
     start_time = tic()
     ideal_point = zeros(length(objectives))
-    for (i, obj_higher) in enumerate(objectives)
-        optimize_and_fix!(augmecon_model, obj_higher)
-        ideal_point[i] = lower_bound(objectives)
-        delete_lower_bound.(objectives)
+    for i in 2:length(ideal_point)
+        obj = objectives[i]
+        optimize_and_fix!(augmecon_model, obj)
+        ideal_point[i] = lower_bound(obj)
+        delete_lower_bound(obj)
     end
     solve_report = augmecon_model.report
     solve_report.counter["tables_generation_total_time"] = toc(start_time)
     @objective(augmecon_model.model, Max, 0.0)
+    # println(ideal_point)
     return ideal_point
 end
 
 function set_objectives_rhs_range(ideal_point, options)
-    verify_nadir(ideal_point, nadir_point)
+    nadir = options[:nadir]
+
+    # println(nadir)
+    verify_nadir(ideal_point, nadir)
     return [
         range(nadir[o], ideal_point[o], length = ((ideal_point[o] - nadir[o]) != 0.0 ? options[:grid_points] : 1)) 
             for o in eachindex(ideal_point)
     ]
 end
 
-function verify_nadir(ideal_point, options)
-    nadir = options[:nadir]
+function verify_nadir(ideal_point, nadir)
     for (o, value) in enumerate(ideal_point)
-        @assert nadir[o] < value "nadir is better than ideal point in at least $o"
+        @assert nadir[o] <= value "nadir is better than ideal point in at least $o"
     end
     return nothing
 end

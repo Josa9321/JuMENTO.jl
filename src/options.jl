@@ -72,6 +72,7 @@ end
 
 function verify_nadir(options)
     try 
+        pushfirst!(options[:nadir], 0.0)
         nadir = options[:nadir]
         @assert typeof(nadir) == Vector{Float64} "typeof nadir isn't equal to Vector{Float64}"
         @assert length(nadir) == options[:num_objectives] "Number of objectives in nadir point should be equal to the number of objectives"
