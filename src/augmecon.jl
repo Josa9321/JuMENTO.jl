@@ -1,5 +1,5 @@
 """
-    augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64)
+    augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64, user_options...)
 
 Solve a JuMP model using the AUGMECON method with the specified optimizer.
 
@@ -30,12 +30,12 @@ end
     c1, x[1] <= 20
     c2, x[2] <= 40
     c3, 5*x[1] + 4*x[2] <= 200
-    objective_1, objs[1] == x[1]
-    objective_2, objs[2] == 3*x[1] + 4*x[2]
+    objective_1, objs[1] == -x[1]
+    objective_2, objs[2] == -(3*x[1] + 4*x[2])
 end
 
 # Solve the model using AUGMECON method
-frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense_set = ["Max", "Max"])
+frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense_set = ["Min", "Min"])
 ```
 """
 function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64; user_options...)
