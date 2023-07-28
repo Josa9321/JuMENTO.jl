@@ -80,7 +80,7 @@ function get_ideal_point(augmecon_model)
     ideal_point = zeros(length(objectives))
     for (i, obj_higher) in enumerate(objectives)
         optimize_and_fix!(augmecon_model, obj_higher)
-        ideal_point[i] = objective_value(augmecon_model.model)
+        ideal_point[i] = lower_bound(objectives)
         delete_lower_bound.(objectives)
     end
     solve_report = augmecon_model.report
