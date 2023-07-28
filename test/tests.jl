@@ -1,7 +1,7 @@
 function test_instances(; files_names, num_objs, solve_instance, folder)
     for file in files_names
         address = folder*file
-        frontier, report = solve_instance(address, objectives_sense = ["Max" for i in Base.OneTo(num_objs)])
+        frontier, report = solve_instance(address)
         compare_payoff_table(report, address)
         compare_frontier(frontier, address)
         println("Instance $file verified")
@@ -32,24 +32,6 @@ function compare_frontier(frontier, address)
 end
 
 ###########################
-
-function number_of_grid_points_used(address)
-    first = findlast("//", address)[end]+1
-    last = findlast(".", address)[end]-1
-    file = address[first:last]
-    grid_points = Dict("2kp50" => 492, "2kp100" => 823, "2kp250" => 2534,
-        "3kp40" => 540, "3kp50" => 847
-    )
-    return grid_points[file]
-end
-
-function nadir_point(address)
-    first = findlast("//", address)[end]+1
-    last = findlast(".", address)[end]-1
-    file = address[first:last]
-    grid_points = Dict("3kp40" => [1031, 1069], "3kp50" => [1124, 1041])
-    return grid_points[file]
-end
 
 function is_solution_in_excel_frontier(solution, excel_frontier)
     for k in axes(excel_frontier, 1)

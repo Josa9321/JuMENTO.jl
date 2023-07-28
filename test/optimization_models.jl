@@ -62,7 +62,7 @@ end
 
 function init_configured_model()
     result = Model(HiGHS.Optimizer)
-    set_optimizer_attribute(result, "logLevel", 0)
+    set_silent(result)
     set_time_limit_sec(result, 60.0)
     return result
 end

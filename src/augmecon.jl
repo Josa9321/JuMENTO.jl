@@ -39,13 +39,13 @@ frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense
 ```
 """
 function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64; user_options...)
-    # objective_sense_set::Vector{String} = ["Max" for i in eachindex(objectives)], 
-    # penalty::Float64 = 1e-3, augmecon_2::Bool = true)
+    @assert length(objectives) >= 2 "The model has only 1 objective"
+    @assert all(JuMP.is_valid.(Ref(model), objectives)) "At least one objective isn't defined in the model as a constraint"
+
     options = augmecon_options(grid_points, length(objectives), user_options) 
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, options)
-    payoff_table!(augmecon_model) 
-    objectives_rhs = set_objectives_rhs_range(augmecon_model)
+    objectives_rhs = get_objectives_rhs(augmecon_model, options)
     set_model_for_augmecon!(augmecon_model, objectives_rhs, options)
     
     solve_report = augmecon_model.report
@@ -64,6 +64,51 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::In
     return generate_pareto(frontier), solve_report
 end
 
+function get_objectives_rhs(augmecon_model, options)
+    if :nadir in keys(options)
+        ideal_point = get_ideal_point(augmecon_model)
+        return set_objectives_rhs_range(ideal_point, options)
+    end
+    payoff_table!(augmecon_model) 
+    return set_objectives_rhs_range(augmecon_model)
+end
+
+function get_ideal_point(augmecon_model)
+    objectives = augmecon_model.objectives_maximize
+
+    start_time = tic()
+    ideal_point = zeros(length(objectives))
+    for (i, obj_higher) in enumerate(objectives)
+        optimize_and_fix!(augmecon_model, obj_higher)
+        ideal_point[i] = objective_value(augmecon_model.model)
+        delete_lower_bound.(objectives)
+    end
+    solve_report = augmecon_model.report
+    solve_report.counter["tables_generation_total_time"] = toc(start_time)
+    @objective(augmecon_model.model, Max, 0.0)
+    return ideal_point
+end
+
+function set_objectives_rhs_range(ideal_point, options)
+    verify_nadir(ideal_point, nadir_point)
+    return [
+        range(nadir[o], ideal_point[o], length = ((ideal_point[o] - nadir[o]) != 0.0 ? options[:grid_points] : 1)) 
+            for o in eachindex(ideal_point)
+    ]
+end
+
+function verify_nadir(ideal_point, options)
+    nadir = options[:nadir]
+    for (o, value) in enumerate(ideal_point)
+        @assert nadir[o] < value "nadir is better than ideal point in at least $o"
+    end
+    return nothing
+end
+
+
+###############################
+###############################
+
 function verify_objectives_sense_set(objective_sense_set, objectives)
     for sense in objective_sense_set
         @assert (sense == "Max" || sense == "Min") """Objective sense should be "Max" or "Min" """
@@ -72,11 +117,11 @@ function verify_objectives_sense_set(objective_sense_set, objectives)
     return nothing
 end
 
+###############################
+###############################
+
 function payoff_table!(augmecon_model::AugmeconJuMP)
     objectives = augmecon_model.objectives_maximize
-    @assert length(objectives) >= 2 "The model has only 1 objective"
-    @assert all(JuMP.is_valid.(Ref(augmecon_model.model), objectives)) "At least one objective isn't defined in the model as a constraint"
-
     start_time = tic()
     solve_report = augmecon_model.report
     table = solve_report.table
@@ -125,6 +170,9 @@ function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     return nothing
 end
 
+###############################
+###############################
+
 function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, options)
     O = 2:num_objectives(augmecon_model)
     @variable(augmecon_model.model, 
@@ -146,6 +194,9 @@ end
 function objectives_rhs_range(objectives_rhs, o)
     return objectives_rhs[o][end] - objectives_rhs[o][1]
 end
+
+###############################
+###############################
 
 function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = num_objectives(augmecon_model), s_2)
     i_k = 0
@@ -184,6 +235,9 @@ function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_
     end
     return nothing
 end
+
+###############################
+###############################
 
 function convert_table_to_correct_sense!(augmecon_model::AugmeconJuMP)
     table = augmecon_model.report.table

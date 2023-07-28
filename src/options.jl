@@ -5,6 +5,9 @@ function augmecon_options(grid_points, num_objectives, user_options)
     return options
 end
 
+###########################
+###########################
+
 function set_options_dict(grid_points, num_objectives, user_options)
     options = Dict{Symbol, Any}(
         :grid_points => grid_points,
@@ -23,11 +26,20 @@ function add_default_options_if_needed!(options)
     return options
 end
 
+
+function add_default!(options_set, key, value) 
+    !(key in keys(options_set)) ? options_set[key] = value : nothing
+end
+
+###########################
+###########################
+
 function verify_options(options)
     verify_bypass(options) 
     verify_grid_points(options) 
     verify_penalty(options) 
     verify_objectives_sense_set(options)
+    verify_nadir(options)
 end
 
 verify_bypass(options) = @assert typeof(options[:bypass]) == Bool "bypass option should be a Bool type"
@@ -58,6 +70,11 @@ function verify_objectives_sense_set(options)
     return true
 end
 
-function add_default!(options_set, key, value) 
-    !(key in keys(options_set)) ? options_set[key] = value : nothing
+function verify_nadir(options)
+    try 
+        nadir = options[:nadir]
+        @assert typeof(nadir) == Vector{Float64} "typeof nadir isn't equal to Vector{Float64}"
+        @assert length(nadir) == options[:num_objectives] "Number of objectives in nadir point should be equal to the number of objectives"
+    catch
+    end
 end
