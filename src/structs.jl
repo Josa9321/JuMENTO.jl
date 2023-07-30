@@ -1,9 +1,3 @@
-
-"""
-    SolveReport
-
-It contains 
-"""
 struct SolveReport{F <: AbstractFloat}
     counter::Dict{String, F}
     table_gap::Vector{F}
