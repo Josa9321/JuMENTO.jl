@@ -1,3 +1,13 @@
+
+"""
+    struct SolveReport
+
+A `SolveReport` struct represents a report of the solution obtained through the AUGMECON method using a specific solver. It holds the following attributes:
+- `counter::Dict{String, F}`: A dictionary containing the number of iterations, the total time spent in the solver and the total time spent in the table solver. Each key is mapped to its corresponding value.
+- `table_gap::Vector{F}`: A vector storing the gap of the payoff table in each iteration (not working for now).
+- `gap::Vector{F}`: A vector storing the gap of the solver in each iteration (not working for now).
+- `table::Matrix{F}`: A matrix storing the values of the payoff table. Each row represents the values of the table solver in an iteration.
+"""
 struct SolveReport{F <: AbstractFloat}
     counter::Dict{String, F}
     table_gap::Vector{F}
@@ -12,6 +22,17 @@ struct SolveReport{F <: AbstractFloat}
     )
 end 
 
+"""
+    struct AugmeconJuMP
+
+A `AugmeconJuMP` struct represents an optimization problem formulated using the JuMENTO Package. It holds the following attributes:
+- `model::Model`: A JuMP model containing the optimization problem.
+- `objectives::Vector{VariableRef}`: A user-provided vector that contains the objectives of the optimization problem.
+- `objectives_maximize::Vector{VariableRef}`: A vector that contains the objectives of the optimization problem, multiplied by the optimization sense, to convert the problem into a maximization form.
+- `sense_value::Vector{F}`:  A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective.
+- `grid_points::N`: The number of grid points used in the table solver.
+- `report::SolveReport{F}`: A report of the solution obtained through the AUGMECON method using a specific solver.
+"""
 struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     model::Model
     objectives::Vector{VariableRef}
@@ -37,9 +58,21 @@ struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
             SolveReport(length(objectives))
         )
     end
-        
 end
 
+
+"""
+    convert_sense_to_num(objective_sense_set)
+
+Converts the sense of the optimization problem from a string to a numeric value. The numeric value is used to convert the problem into a maximization form. For example, if the sense is "Min", then the numeric value is -1.0. If the sense is "Max", then the numeric value is 1.0.
+# example
+```julia-repl
+julia> convert_sense_to_num(["Min", "Max"])
+2-element Vector{Float64}:
+ -1.0
+  1.0
+```
+"""
 function convert_sense_to_num(objective_sense_set)
     result = fill(1.0, length(objective_sense_set))
     for (o, sense) in enumerate(objective_sense_set)
@@ -67,14 +100,22 @@ struct SolutionJuMP{V, F <: AbstractFloat}
         variables = save_variables!(augmecon_model)
         return new{typeof(variables), Float64}(
             variables,
-            save_objetives!(augmecon_model)
+            get_objetives!(augmecon_model)
         )
     end
 end
 
+
+"""
+    get_variables(solution::SolutionJuMP)
+
+A function that returns the objectives from a solution obtained through the AUGMECON method using a specific solver.
+"""
 get_objectives(solution::SolutionJuMP) = solution.objectives
 
-function save_objetives!(augmecon_model)
+"""
+"""
+function get_objetives!(augmecon_model::AugmeconJuMP)
     return value.(augmecon_model.objectives)
 end
 
