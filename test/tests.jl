@@ -1,4 +1,4 @@
-function test_instances(; files_names, num_objs, solve_instance, folder, compare_payoff = false)
+function test_instances(; files_names, solve_instance, folder, compare_payoff = false)
     for file in files_names
         address = folder*file
         frontier, report = solve_instance(address)

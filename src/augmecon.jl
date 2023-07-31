@@ -1,19 +1,22 @@
 """
-    augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64, user_options...)
+    augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
+or
+    augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
 
 Augmecon is a function that solves a multiobjective optimization problem using the augmented ε-constraint method with a specified solver.
 
 # Arguments
 - `model::Model`: A JuMP model containing the optimization problem.
 - `objectives::Vector{VariableRef}`: A user-provided vector that contains the objectives of the optimization problem.
-- `grid_points::Int64`: The number of grid points used in the table solver.
-- `user_options...`: A set of options that can be used to customize the AUGMECON method.
+- `user_options`: A set of options that can be used to customize the AUGMECON method.
 
 # Options
-- `:objective_sense_set`: A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective. The default value is `["Min", "Min", ...]`.
-- `:penalty`: A numeric value that indicates the penalty used in the augmented ε-constraint method. The default value is `1.0`.
-- `:bypass`: A boolean value that indicates whether the bypass method should be used. The default value is `false`.
-- `:nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
+- `grid_points`: The number of grid points used in the table solver.
+- `objective_sense_set`: A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective. The default value is `["Min", "Min", ...]`.
+- `penalty`: A numeric value that indicates the penalty used in the augmented ε-constraint method. The default value is `1.0`.
+- `bypass`: A boolean value that indicates whether the bypass method should be used. The default value is `false`.
+- `nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
+- `dominance_eps`: A value that indicates the epsilon used in the dominance relations. The default value is `1e-8`.
 
 # Returns
 - `pareto_set::Vector{SolutionJuMP}`: A vector containing the solutions of the optimization problem.
@@ -42,11 +45,14 @@ end
 frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense_set = ["Min", "Min"])
 ```
 """
-function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64; user_options...)
+function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
+    return augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
+end
+function augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(model), objectives)) "At least one objective isn't defined in the model as a constraint"
 
-    options = augmecon_options(grid_points, length(objectives), user_options) 
+    options = augmecon_options(user_options, length(objectives)) 
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, options)
     objectives_rhs = get_objectives_rhs(augmecon_model, options)
@@ -65,7 +71,7 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::In
     solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
     solve_report.counter["total_time"] = toc(start_augmecon_time)
     convert_table_to_correct_sense!(augmecon_model)
-    return generate_pareto(frontier), solve_report
+    return generate_pareto(frontier, options[:dominance_eps]), solve_report
 end
 
 """

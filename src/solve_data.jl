@@ -6,7 +6,7 @@
 
 
 """
-    save_results(pareto_set::Vector{SolutionJuMP}, report::SolveReport; file_path, file_type="csv")
+    save_results(pareto_set, report::SolveReport; file_path, file_type="csv")
 
 Saves the Pareto set and associated optimization report to a specified file format.
 
@@ -16,7 +16,7 @@ Saves the Pareto set and associated optimization report to a specified file form
 - `file_path`: The file path specifying the location where the results will be saved. The path should include the filename, but without its format.
 - `file_type="csv"`: (Optional) The file type for saving the results. The available options are "csv" and "xlsx". The default value is "csv".
 """
-function save_results(pareto_set::Vector{SolutionJuMP}, report::SolveReport; file_path, file_type="csv")
+function save_results(pareto_set, report::SolveReport; file_path, file_type="csv")
     if file_type == "csv"
         save_results_csv(pareto_set, report; file_path=file_path)
     elseif file_type == "xlsx"
@@ -28,7 +28,7 @@ function save_results(pareto_set::Vector{SolutionJuMP}, report::SolveReport; fil
 end
 
 """
-    save_results_csv(pareto_set::Vector{SolutionJuMP}, report::SolveReport; file_path)
+    save_results_csv(pareto_set, report::SolveReport; file_path)
 
 Saves the results of the optimization process in CSV files. The CSV files are the following:
 - `objs`: A file containing the values of the objectives for each solution in the pareto_set.
@@ -45,7 +45,7 @@ Saves the results of the optimization process in CSV files. The CSV files are th
 julia> save_results_csv(pareto_set, report; file_path="results")
 ```
 """
-function save_results_csv(pareto_set::Vector{SolutionJuMP}, report::SolveReport; file_path)
+function save_results_csv(pareto_set, report::SolveReport; file_path)
     df_objectives = generate_dataframe_objectives(pareto_set)
     CSV.write("$(file_path)_objectives.csv", df_objectives)
 
@@ -56,7 +56,7 @@ function save_results_csv(pareto_set::Vector{SolutionJuMP}, report::SolveReport;
 end
 
 """
-    save_results_XLSX(pareto_set::Vector{SolutionJuMP}, report::SolveReport; file_path)
+    save_results_XLSX(pareto_set, report::SolveReport; file_path)
 
 Saves the results of the optimization process in a XLSX file. The file's sheets are the following:
 - `objs`: A sheet containing the values of the objectives for each solution in the pareto_set.
@@ -73,7 +73,7 @@ Saves the results of the optimization process in a XLSX file. The file's sheets 
 julia> save_results_XLSX(pareto_set, report; file_path="results")
 ```
 """
-function save_results_XLSX(pareto_set::Vector{SolutionJuMP}, report::SolveReport; file_path)
+function save_results_XLSX(pareto_set, report::SolveReport; file_path)
     df_objectives = generate_dataframe_objectives(pareto_set)
     df_payoff, df_counter = generate_solve_report_dataframes(report)
 
@@ -96,7 +96,7 @@ function save_results_XLSX(pareto_set::Vector{SolutionJuMP}, report::SolveReport
 end
 
 """
-    generate_dataframe_objectives(pareto_set::Vector{SolutionJuMP})
+    generate_dataframe_objectives(pareto_set)
 
 Generates a dataframe containing the values of the objectives for each solution in the pareto_set.
 
@@ -108,7 +108,7 @@ Generates a dataframe containing the values of the objectives for each solution 
 julia> df_objectives = generate_dataframe_objectives(pareto_set)
 ```
 """
-function generate_dataframe_objectives(pareto_set::Vector{SolutionJuMP})
+function generate_dataframe_objectives(pareto_set)
     objectives = frontier_to_objective_matrix(pareto_set)
     df_objectives = DataFrame(objectives, ["obj_$(j)" for j in axes(objectives, 2)])
     return df_objectives
@@ -135,7 +135,7 @@ end
 
 
 """
-    frontier_to_objective_matrix(pareto_set::Vector{SolutionJuMP})
+    frontier_to_objective_matrix(pareto_set)
 
 Converts the values of the objectives of the solutions in the pareto_set into a matrix.
 
@@ -147,7 +147,7 @@ Converts the values of the objectives of the solutions in the pareto_set into a 
 julia> objectives = frontier_to_objective_matrix(pareto_set)
 ```
 """
-function frontier_to_objective_matrix(pareto_set::Vector{SolutionJuMP})
+function frontier_to_objective_matrix(pareto_set)
     num_objectives = length(pareto_set[1].objectives)
     result = zeros(length(pareto_set), num_objectives)
     

@@ -1,20 +1,36 @@
-function augmecon_options(grid_points, num_objectives, user_options) 
-    options = set_options_dict(grid_points, num_objectives, user_options)
+function augmecon_options(user_options, num_objectives)
+    options = set_options_dict(user_options, num_objectives)
+    verify_user_keys(options)
     add_default_options_if_needed!(options)
     verify_options(options)
     return options
 end
 
+function verify_user_keys(user_options)
+    user_keys = keys(user_options)
+    @assert :grid_points in user_keys "grid_points option is missing"
+    
+    valid_keys = [:grid_points,
+        :objective_sense_set, 
+        :penalty, 
+        :bypass, 
+        :dominance_eps,
+        :num_objectives
+    ]
+    for key in user_keys
+        @assert key in valid_keys "Invalid key: $(key) \nValid keys are: $(valid_keys[1:end-1])"
+    end
+    return nothing
+end
+
 ###########################
 ###########################
 
-function set_options_dict(grid_points, num_objectives, user_options)
-    options = Dict{Symbol, Any}(
-        :grid_points => grid_points,
-        :num_objectives => num_objectives,
-    )
+function set_options_dict(user_options, num_objectives)
+    options = Dict{Symbol, Any}()
+    options[:num_objectives] = num_objectives
     for (k, value) in pairs(user_options)
-        options[k] = value
+        options[Symbol(k)] = value
     end
     return options
 end
@@ -23,6 +39,7 @@ function add_default_options_if_needed!(options)
     add_default!(options, :objective_sense_set, ["Max" for i in Base.OneTo(options[:num_objectives])])
     add_default!(options, :penalty, 1e-3)
     add_default!(options, :bypass, true)
+    add_default!(options, :dominance_eps, 1e-8)
     return options
 end
 
