@@ -1,4 +1,3 @@
-
 """
     struct SolveReport
 
@@ -114,12 +113,36 @@ A function that returns the objectives from a solution obtained through the AUGM
 get_objectives(solution::SolutionJuMP) = solution.objectives
 
 """
+    get_variables(solution::SolutionJuMP)
+
+A function that returns the objectives performance from a solution stored at a AugmeconJuMP model obtained through the AUGMECON method using a specific solver.
+
+# Arguments
+- `augmecon_model`: A AugmeconJuMP model.
+
+# Example
+```julia-repl
+julia> get_objectives(augmecon_model)
+```
 """
 function get_objetives!(augmecon_model::AugmeconJuMP)
     return value.(augmecon_model.objectives)
 end
 
-function save_variables!(augmecon_model)
+"""
+    save_variables!(augmecon_model::AugmeconJuMP)
+    
+A function that returns the variables from a solution stored at a AugmeconJuMP model obtained through the AUGMECON method using a specific solver.
+
+# Arguments
+- `augmecon_model`: A AugmeconJuMP model.
+
+# Example
+```julia-repl
+julia> save_variables!(augmecon_model)
+```
+"""
+function save_variables!(augmecon_model::AugmeconJuMP)
     result = Dict()
     model_JuMP = augmecon_model.model
     objects_set = model_JuMP.obj_dict

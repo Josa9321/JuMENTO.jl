@@ -1,19 +1,23 @@
 """
     augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::Int64, user_options...)
 
-Solve a JuMP model using the AUGMECON method with the specified optimizer.
+Augmecon is a function that solves a multiobjective optimization problem using the augmented ε-constraint method with a specified solver.
 
-# Arguments:
-- `model::Model`: The JuMP model to be solved with AUGMECON.
-- `objectives::Vector{VariableRef}`: A vector of variables representing the objectives of the model.
-- `grid_points::Int64`: The number of grid points used in the AUGMECON method.
-- `objective_sense_set::Vector{String}`: A vector of strings specifying the objective senses for each objective. Default value is `["Max" for i in eachindex(objectives)]`, indicating that all objectives are to be maximized. Use `"Max"` for maximization and `"Min"` for minimization.
-- `penalty::Float64`: (Optional) Penalty parameter for AUGMECON method. Default value is `1e-3`, which falls within the recommended interval suggested by the authors, between `1e-3` and `1e-6`.
-- `augmecon_2::Bool`: (Optional) If set to `true` (default), AUGMECON will use its second version (augmecon_2) to solve the model. Set to `false` to use the original AUGMECON algorithm.
+# Arguments
+- `model::Model`: A JuMP model containing the optimization problem.
+- `objectives::Vector{VariableRef}`: A user-provided vector that contains the objectives of the optimization problem.
+- `grid_points::Int64`: The number of grid points used in the table solver.
+- `user_options...`: A set of options that can be used to customize the AUGMECON method.
 
-# Returns:
-- `frontier`: An array containing the optimal solutions forming the Pareto frontier.
-- `solve_report`: A report containing additional information about the optimization process.
+# Options
+- `:objective_sense_set`: A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective. The default value is `["Min", "Min", ...]`.
+- `:penalty`: A numeric value that indicates the penalty used in the augmented ε-constraint method. The default value is `1.0`.
+- `:bypass`: A boolean value that indicates whether the bypass method should be used. The default value is `false`.
+- `:nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
+
+# Returns
+- `pareto_set::Vector{SolutionJuMP}`: A vector containing the solutions of the optimization problem.
+- `solve_report::SolveReport{F}`: A report of the solution obtained through the AUGMECON method using a specific solver.
 
 # Examples
 ```julia
@@ -64,6 +68,25 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, grid_points::In
     return generate_pareto(frontier), solve_report
 end
 
+"""
+    get_objectives_rhs(augmecon_model, options)
+
+This function computes and returns the range of each objective in the optimization problem, considering either a specified nadir point or the payoff table.
+
+# Arguments
+- `augmecon_model::AugmeconJuMP`: A model containing the optimization problem.
+- `options`: A set of options that can be used to customize the AUGMECON method.
+
+# Options
+- `:nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
+- `:grid_points`: The number of grid points used in the table solver.
+
+# Returns
+- `objectives_rhs::Vector{Vector{Float64}}`: A vector containing the range of each objective in the optimization problem.
+
+# Notes
+- If the nadir point is not specified, then the payoff table is used to define a nadir point.
+"""
 function get_objectives_rhs(augmecon_model, options)
     if :nadir in keys(options)
         ideal_point = get_ideal_point(augmecon_model)
@@ -73,6 +96,11 @@ function get_objectives_rhs(augmecon_model, options)
     return set_objectives_rhs_range(augmecon_model)
 end
 
+"""
+    get_ideal_point(augmecon_model)
+
+This function computes and returns the ideal point of the optimization problem. It is intended for use when a user specifies a nadir point in the options.
+"""
 function get_ideal_point(augmecon_model)
     objectives = augmecon_model.objectives_maximize
 
