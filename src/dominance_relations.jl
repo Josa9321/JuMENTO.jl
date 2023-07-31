@@ -1,10 +1,11 @@
 """
-    generate_pareto(solutions_set)
+    generate_pareto(solutions_set, efficiency_eps)
 
 Generate the Pareto set from a given solutions_set.
 
 # Arguments
 - `solution_set`: A vector containing the solutions from which the Pareto set will be generated.
+- `efficiency_eps::Float64`: A float value indicating the error tolerance for the comparison.
 
 # Returns
 - `pareto_set`: A vector containing the solutions that compose the Pareto set.

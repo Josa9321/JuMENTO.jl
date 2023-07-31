@@ -8,14 +8,14 @@ Augmecon is a function that solves a multiobjective optimization problem using t
 # Arguments
 - `model::Model`: A JuMP model containing the optimization problem.
 - `objectives::Vector{VariableRef}`: A user-provided vector that contains the objectives of the optimization problem.
-- `user_options`: A set of options that can be used to customize the AUGMECON method.
+- `user_options`: A set of required and optional keyword arguments (or Dict) that allow customization of the AUGMECON method.
 
 # Options
-- `grid_points`: The number of grid points used in the table solver.
-- `objective_sense_set`: A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective. The default value is `["Min", "Min", ...]`.
-- `penalty`: A numeric value that indicates the penalty used in the augmented ε-constraint method. The default value is `1.0`.
-- `bypass`: A boolean value that indicates whether the bypass method should be used. The default value is `false`.
-- `nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
+- `grid_points` (required): The number of grid points used in the table solver.
+- `objective_sense_set`: A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective. The default value is `["Max", "Max", ...]`.
+- `penalty`: A numeric value that indicates the penalty used in the augmented ε-constraint method. The default value is `1e-3`.
+- `bypass`: A boolean value that indicates whether the bypass method should be used. The default value is `true`.
+- `nadir`: A vector that indicates the nadir point of the optimization problem. 
 - `dominance_eps`: A value that indicates the epsilon used in the dominance relations. The default value is `1e-8`.
 
 # Returns
@@ -84,14 +84,14 @@ This function computes and returns the range of each objective in the optimizati
 - `options`: A set of options that can be used to customize the AUGMECON method.
 
 # Options
-- `:nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
 - `:grid_points`: The number of grid points used in the table solver.
+- `:nadir`: A vector that indicates the nadir point of the optimization problem. The default value is `nothing`.
 
 # Returns
 - `objectives_rhs::Vector{Vector{Float64}}`: A vector containing the range of each objective in the optimization problem.
 
 # Notes
-- If the nadir point is not specified, then the payoff table is used to define a nadir point.
+- If the nadir point is not specified, then the payoff table is used to define a possible nadir point.
 """
 function get_objectives_rhs(augmecon_model, options)
     if :nadir in keys(options)
@@ -125,6 +125,11 @@ function get_ideal_point(augmecon_model)
     return ideal_point
 end
 
+"""
+    set_objectives_rhs_range(ideal_point, options)
+
+This function computes and returns the range of each objective in the optimization problem, considering a specified nadir point.
+"""
 function set_objectives_rhs_range(ideal_point, options)
     nadir = options[:nadir]
 
@@ -136,6 +141,12 @@ function set_objectives_rhs_range(ideal_point, options)
     ]
 end
 
+
+"""
+    verify_nadir(ideal_point, nadir)
+
+This function verifies whether the nadir point is better than the ideal point in at least one objective.
+"""
 function verify_nadir(ideal_point, nadir)
     for (o, value) in enumerate(ideal_point)
         @assert nadir[o] <= value "nadir is better than ideal point in at least $o"
@@ -147,6 +158,12 @@ end
 ###############################
 ###############################
 
+
+"""
+    verify_objectives_sense_set(objective_sense_set, objectives)
+
+This function verifies whether the objective sense set is valid.
+"""
 function verify_objectives_sense_set(objective_sense_set, objectives)
     for sense in objective_sense_set
         @assert (sense == "Max" || sense == "Min") """Objective sense should be "Max" or "Min" """
@@ -158,6 +175,11 @@ end
 ###############################
 ###############################
 
+"""
+    payoff_table!(augmecon_model::AugmeconJuMP)
+
+This function computes and returns the payoff table of the optimization problem.
+"""
 function payoff_table!(augmecon_model::AugmeconJuMP)
     objectives = augmecon_model.objectives_maximize
     start_time = tic()
@@ -178,6 +200,11 @@ function payoff_table!(augmecon_model::AugmeconJuMP)
     return table
 end
 
+"""
+    set_objectives_rhs_range(augmecon_model::AugmeconJuMP)
+
+This function computes and returns the range of each objective in the optimization problem, considering the payoff table.
+"""
 function set_objectives_rhs_range(augmecon_model::AugmeconJuMP)
     solve_report = augmecon_model.report
     table = solve_report.table
@@ -187,6 +214,11 @@ function set_objectives_rhs_range(augmecon_model::AugmeconJuMP)
     return [range(minimum_o[o], maximum_o[o], length = ((maximum_o[o] - minimum_o[o]) != 0.0 ? augmecon_model.grid_points : 1)) for o in O]
 end
 
+"""
+    save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
+
+This function stores the lower bound for each objective of the found solution in the payoff table.
+"""
 function save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
     for o in Base.OneTo(num_objectives(augmecon_model))
         table[i, o] = lower_bound(augmecon_model.objectives_maximize[o])
@@ -194,6 +226,11 @@ function save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
     return table
 end
 
+"""
+    optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
+
+This function optimizes the model and fixes the lower bound of the given objective.
+"""
 function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     model = augmecon_model.model
     @objective(model, Max, objective)
@@ -211,6 +248,11 @@ end
 ###############################
 ###############################
 
+"""
+    set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, options)
+
+This function sets the model for the AUGMECON method.
+"""
 function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, options)
     O = 2:num_objectives(augmecon_model)
     @variable(augmecon_model.model, 
@@ -229,6 +271,11 @@ function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, o
     return nothing
 end
 
+"""
+    objectives_rhs_range(objectives_rhs, o)
+
+This function computes and returns the range of the given objective.
+"""
 function objectives_rhs_range(objectives_rhs, o)
     return objectives_rhs[o][end] - objectives_rhs[o][1]
 end
@@ -236,6 +283,12 @@ end
 ###############################
 ###############################
 
+
+"""
+    recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = num_objectives(augmecon_model), s_2)
+
+This function recursively solves the model using the AUGMECON method with the bypass method.
+"""
 function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = num_objectives(augmecon_model), s_2)
     i_k = 0
     while i_k < augmecon_model.grid_points
@@ -257,6 +310,11 @@ function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives
     return nothing
 end
 
+"""
+    recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = 2)
+
+This function recursively solves the model using the AUGMECON method.
+"""
 function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = 2)
     for eps in objectives_rhs[o]
         set_normalized_rhs(augmecon_model.model[:other_objectives][o], eps)
