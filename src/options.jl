@@ -11,7 +11,7 @@ function verify_user_keys(user_options)
     @assert :grid_points in user_keys "grid_points option is missing"
     
     valid_keys = [:grid_points,
-        :nadir
+        :nadir,
         :objective_sense_set, 
         :penalty, 
         :bypass, 
