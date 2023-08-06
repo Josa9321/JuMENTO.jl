@@ -3,7 +3,7 @@ function solve_kp_instance(address)
     instance = KnapsackInstance(address)
     model, objs = knapsack_model(instance)
     if file in ["3kp40", "3kp50"]
-        frontier, report = augmecon(model, objs, grid_points=grid_points(file), nadir=nadir_point(file))
+        frontier, report = augmecon(model, objs, grid_points=grid_points(file), nadir=nadir_point(file), dominance_eps=0.5)
     else
         frontier, report = augmecon(model, objs, grid_points=grid_points(file), dominance_eps=0.5)
     end
