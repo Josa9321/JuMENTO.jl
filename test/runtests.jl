@@ -1,13 +1,19 @@
 using Jumento
 
-include("optimization_models.jl")
-include("tests.jl")
+include("simple_models.jl")
+include("test_simple_models.jl")
+include("test_xlsx.jl")
 include("mokp//load.jl")
 
-# test_instances(files_names=["2kp50.xlsx", "2kp100.xlsx", "2kp250.xlsx"], compare_payoff = true,
-#     solve_instance = solve_kp_instance, folder = "mokp//instances//"
-# )
-# test_instances(files_names=["3kp40.xlsx", "3kp50.xlsx"],
-#     solve_instance = solve_kp_instance, folder = "mokp//instances//", 
-# )
-
+test_simple_problems(
+    simple_biobjective_problem, 
+    simple_biobjective_frontier(), 
+    simple_biobjective_table(),
+    is_augmecon_2 = false
+)
+test_simple_problems(
+    simple_biobjective_problem, 
+    simple_biobjective_frontier(), 
+    simple_biobjective_table(),
+    is_augmecon_2 = true
+)
