@@ -15,8 +15,8 @@ function simple_biobjective_problem()
         objective_1, objs[1] == x[1]
         objective_2, objs[2] == 3*x[1] + 4*x[2]
     end
-
-    return model, objs
+    objs_sense = ["Max", "Max"]
+    return model, objs, objs_sense
 end
 
 function simple_triobjective_problem()
@@ -56,8 +56,8 @@ function simple_triobjective_problem()
         objective_2, objs[2] == (1.44 * LIGN + 0.72 * OIL + 0.45 * NG)
         objective_3, objs[3] == (OIL + NG)
     end
-
-    return model, objs
+    objs_sense = ["Min", "Min", "Min"]
+    return model, objs, objs_sense
 end
 
 function init_configured_model()
