@@ -1,4 +1,4 @@
-using Jumento
+using JuMENTO
 
 include("simple_models.jl")
 include("test_simple_models.jl")

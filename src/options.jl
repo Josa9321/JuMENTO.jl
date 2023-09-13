@@ -16,7 +16,8 @@ function verify_user_keys(user_options)
         :penalty, 
         :bypass, 
         :dominance_eps,
-        :num_objectives
+        :num_objectives,
+        :print_level,
     ]
     for key in user_keys
         @assert key in valid_keys "Invalid key: $(key) \nValid keys are: $(valid_keys[1:end-1])"
@@ -41,6 +42,7 @@ function add_default_options_if_needed!(options)
     add_default!(options, :penalty, 1e-3)
     add_default!(options, :bypass, true)
     add_default!(options, :dominance_eps, 1e-8)
+    add_default!(options, :print_level, 1)
     return options
 end
 
@@ -53,7 +55,8 @@ end
 ###########################
 
 function verify_options(options)
-    verify_bypass(options) 
+    verify_bypass(options)
+    verify_print_level(options)
     verify_grid_points(options) 
     verify_penalty(options) 
     verify_objectives_sense_set(options)
@@ -61,6 +64,8 @@ function verify_options(options)
 end
 
 verify_bypass(options) = @assert typeof(options[:bypass]) == Bool "bypass option should be a Bool type"
+
+verify_print_level(options) = @assert typeof(options[:print_level]) == Integer "print_level option should be a Integer type"
 
 function verify_grid_points(options)
     grid_points = options[:grid_points]
