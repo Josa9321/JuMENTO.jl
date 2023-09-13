@@ -65,7 +65,7 @@ end
 
 verify_bypass(options) = @assert typeof(options[:bypass]) == Bool "bypass option should be a Bool type"
 
-verify_print_level(options) = @assert typeof(options[:print_level]) == Integer "print_level option should be a Integer type"
+verify_print_level(options) = @assert typeof(options[:print_level]) == Int64 "print_level option should be a Int64 type"
 
 function verify_grid_points(options)
     grid_points = options[:grid_points]
