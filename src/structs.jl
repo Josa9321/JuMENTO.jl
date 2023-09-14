@@ -96,10 +96,18 @@ struct SolutionJuMP{V, F <: AbstractFloat}
     objectives::Vector{F}
 
     SolutionJuMP(augmecon_model::AugmeconJuMP) = begin
-        variables = save_variables!(augmecon_model)
+        variables = save_variables!(augmecon_model.model)
         return new{typeof(variables), Float64}(
             variables,
             get_objetives!(augmecon_model)
+        )
+    end
+
+    SolutionJuMP(model::Model) = begin
+        variables = save_variables!(model)
+        return new{typeof(variables), Float64}(
+            variables,
+            [objective_value(model)]
         )
     end
 end
@@ -130,22 +138,21 @@ function get_objetives!(augmecon_model::AugmeconJuMP)
 end
 
 """
-    save_variables!(augmecon_model::AugmeconJuMP)
+    save_variables!(model::Model)
     
-A function that returns the variables from a solution stored at a AugmeconJuMP model obtained through the AUGMECON method using a specific solver.
+A function that returns the variables from a solution stored at a Model type.
 
 # Arguments
-- `augmecon_model`: A AugmeconJuMP model.
+- `model`: A model.
 
 # Example
 ```julia-repl
-julia> save_variables!(augmecon_model)
+julia> save_variables!(model)
 ```
 """
-function save_variables!(augmecon_model::AugmeconJuMP)
+function save_variables!(model::Model)
     result = Dict()
-    model_JuMP = augmecon_model.model
-    objects_set = model_JuMP.obj_dict
+    objects_set = model.obj_dict
     for k in keys(objects_set)
         if typeof(objects_set[k]) <: Array{VariableRef} && k != :objectives_maximize
             result[k] = value.(objects_set[k])
