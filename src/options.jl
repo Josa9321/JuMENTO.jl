@@ -70,7 +70,7 @@ verify_print_level(options) = @assert typeof(options[:print_level]) == Int64 "pr
 function verify_grid_points(options)
     grid_points = options[:grid_points]
     @assert typeof(grid_points) == Int64 "Number of grid_points should be integer"
-    @assert grid_points > 0 "Number of grid_points should be positive"
+    @assert grid_points > 1 "Number of grid_points should be higher than 1"
     return nothing
 end
 

@@ -63,11 +63,13 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
     solve_report = augmecon_model.report
     start_recursion_time = tic()
     frontier = SolutionJuMP[]
-    if options[:bypass]
-        s_2 = augmecon_model.model[:s][2]
-        recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, s_2 = s_2)
-    else
-        recursive_augmecon!(augmecon_model, frontier, objectives_rhs)
+    if has_viable_ideal_nadir(augmecon_model)
+        if options[:bypass]
+            s_2 = augmecon_model.model[:s][2]
+            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, s_2 = s_2)
+        else
+            recursive_augmecon!(augmecon_model, frontier, objectives_rhs)
+        end
     end
 
     solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
@@ -115,10 +117,16 @@ function get_ideal_point(augmecon_model)
     start_time = tic()
     ideal_point = zeros(length(objectives))
     for i in 2:length(ideal_point)
+        if !has_viable_ideal_nadir(augmecon_model)
+            continue
+        end
         obj = objectives[i]
-        optimize_and_fix!(augmecon_model, obj)
-        ideal_point[i] = lower_bound(obj)
-        delete_lower_bound(obj)
+        has_ideal_nadir = optimize_and_fix!(augmecon_model, obj)
+        set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
+        if has_viable_ideal_nadir(augmecon_model)
+            ideal_point[i] = lower_bound(obj)
+            delete_lower_bound(obj)
+        end
     end
     solve_report = augmecon_model.report
     solve_report.counter["tables_generation_total_time"] = toc(start_time)
