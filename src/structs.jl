@@ -3,18 +3,21 @@
 
 A `SolveReport` struct represents a report of the solution obtained through the AUGMECON method using a specific solver. It holds the following attributes:
 - `counter::Dict{String, F}`: A dictionary containing the number of iterations, the total time spent in the solver and the total time spent in the table solver. Each key is mapped to its corresponding value.
+- 'has_nadir_ideal::B': A boolean value indicating whether the solver has found viables nadir and ideal points.
 - `table_gap::Vector{F}`: A vector storing the gap of the payoff table in each iteration (not working for now).
 - `gap::Vector{F}`: A vector storing the gap of the solver in each iteration (not working for now).
 - `table::Matrix{F}`: A matrix storing the values of the payoff table. Each row represents the values of the table solver in an iteration.
 """
-struct SolveReport{F <: AbstractFloat}
+mutable struct SolveReport{F <: AbstractFloat, B <: Integer}
     counter::Dict{String, F}
+    has_nadir_ideal::B
     table_gap::Vector{F}
     gap::Vector{F}
     table::Matrix{F}
 
-    SolveReport(num_objectives) = new{Float64}(
-        Dict{String, Float64}("iterations" => 0.0, "solve_time" => 0.0, "table_solve_time" => 0.0), 
+    SolveReport(num_objectives) = new{Float64, Bool}(
+        Dict{String, Float64}("iterations" => 0.0, "solve_time" => 0.0, "table_solve_time" => 0.0, "has_viable_nadir_ideal" => true), 
+        true,
         Float64[],
         Float64[], 
         zeros(num_objectives, num_objectives)
@@ -32,13 +35,13 @@ A `AugmeconJuMP` struct represents an optimization problem formulated using the 
 - `grid_points::N`: The number of grid points used in the table solver.
 - `report::SolveReport{F}`: A report of the solution obtained through the AUGMECON method using a specific solver.
 """
-struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
+struct AugmeconJuMP{N <: Integer, B <: Integer, F <: AbstractFloat}
     model::Model
     objectives::Vector{VariableRef}
     objectives_maximize::Vector{VariableRef}
     sense_value::Vector{F}
     grid_points::N
-    report::SolveReport{F}
+    report::SolveReport{F, B}
     
     AugmeconJuMP(model, objectives, options) = begin
         sense_in_num = convert_sense_to_num(options[:objective_sense_set])
@@ -48,7 +51,7 @@ struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
             objectives_in_correct_sense[o in O],
                 objectives_maximize[o] == objectives[o] * sense_in_num[o]
         end
-        return new{Int64, Float64}(
+        return new{Int64, Bool, Float64}(
             model, 
             objectives,
             objectives_maximize,
@@ -59,6 +62,10 @@ struct AugmeconJuMP{N <: Integer, F <: AbstractFloat}
     end
 end
 
+function has_viable_ideal_nadir(augmecon_model::AugmeconJuMP)
+    solve_report = augmecon_model.report
+    return solve_report.has_nadir_ideal
+end
 
 """
     convert_sense_to_num(objective_sense_set)
@@ -151,10 +158,10 @@ julia> save_variables!(model)
 ```
 """
 function save_variables!(model::Model)
-    result = Dict()
+    result = Dict{Symbol, Any}()
     objects_set = model.obj_dict
     for k in keys(objects_set)
-        if typeof(objects_set[k]) <: Array{VariableRef} && k != :objectives_maximize
+        if (typeof(objects_set[k]) <: Array{VariableRef} || typeof(objects_set[k]) <: VariableRef) && k != :objectives_maximize
             result[k] = value.(objects_set[k])
         end
     end

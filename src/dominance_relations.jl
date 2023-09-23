@@ -12,7 +12,6 @@ Generate the Pareto set from a given solutions_set.
 """
 function generate_pareto(solutions_set, efficiency_eps)
     if length(solutions_set) == 0 
-        @warn "frontier has 0 solutions"
         return solutions_set
     end
 

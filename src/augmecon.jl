@@ -55,6 +55,8 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
     options = augmecon_options(user_options, length(objectives)) 
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, options)
+
+    # From now, solutions will be generated
     objectives_rhs = get_objectives_rhs(augmecon_model, options)
     set_model_for_augmecon!(augmecon_model, objectives_rhs, options)
     
@@ -121,7 +123,6 @@ function get_ideal_point(augmecon_model)
     solve_report = augmecon_model.report
     solve_report.counter["tables_generation_total_time"] = toc(start_time)
     @objective(augmecon_model.model, Max, 0.0)
-    # println(ideal_point)
     return ideal_point
 end
 
@@ -133,7 +134,6 @@ This function computes and returns the range of each objective in the optimizati
 function set_objectives_rhs_range(ideal_point, options)
     nadir = options[:nadir]
 
-    # println(nadir)
     verify_nadir(ideal_point, nadir)
     return [
         range(nadir[o], ideal_point[o], length = ((ideal_point[o] - nadir[o]) != 0.0 ? options[:grid_points] : 1)) 
@@ -186,14 +186,21 @@ function payoff_table!(augmecon_model::AugmeconJuMP)
     solve_report = augmecon_model.report
     table = solve_report.table
     for (i, obj_higher) in enumerate(objectives)
-        optimize_and_fix!(augmecon_model, obj_higher)
+        if !has_viable_ideal_nadir(augmecon_model)
+            continue
+        end
+        has_ideal_nadir = optimize_and_fix!(augmecon_model, obj_higher)
+        set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
         for (o, obj_minor) in enumerate(objectives)
-            if i != o
-                optimize_and_fix!(augmecon_model, obj_minor)
+            if i != o && has_viable_ideal_nadir(augmecon_model)
+                has_ideal_nadir = optimize_and_fix!(augmecon_model, obj_minor)
+                set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
             end
         end
-        save_on_table!(table, i, augmecon_model)
-        delete_lower_bound.(objectives)
+        if has_viable_ideal_nadir(augmecon_model)
+            save_on_table!(table, i, augmecon_model)
+            delete_lower_bound.(objectives)
+        end
     end
     solve_report.counter["tables_generation_total_time"] = toc(start_time)
     @objective(augmecon_model.model, Max, 0.0)
@@ -235,14 +242,16 @@ function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     model = augmecon_model.model
     @objective(model, Max, objective)
     optimize!(model)
+    has_a_solution = has_values(model)
 
     # Save report
     solve_report = augmecon_model.report
     solve_report.counter["table_solve_time"] += solve_time(model)
     # push!(solve_report.table_gap, relative_gap(model))
-
-    set_lower_bound(objective, objective_value(model))
-    return nothing
+    if has_a_solution
+        set_lower_bound(objective, objective_value(model))
+    end
+    return has_a_solution
 end
 
 ###############################
@@ -291,7 +300,7 @@ This function recursively solves the model using the AUGMECON method with the by
 """
 function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs; o = num_objectives(augmecon_model), s_2)
     i_k = 0
-    while i_k < augmecon_model.grid_points
+    while i_k < length(objectives_rhs[o]) # augmecon_model.grid_points
         i_k += 1
         set_normalized_rhs(augmecon_model.model[:other_objectives][o], objectives_rhs[o][i_k])
         if o > 2
@@ -362,6 +371,11 @@ end
 function since_solver_could_let_s_2_less_than_zero(b)
     result = trunc(Int64, b)
     return result
+end
+
+function set_if_has_viable_ideal_nadir!(augmecon_model::AugmeconJuMP, has_found)
+    augmecon_model.report.has_nadir_ideal = has_found
+    return nothing
 end
 
 tic() = time()
