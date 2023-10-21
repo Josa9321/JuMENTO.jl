@@ -155,7 +155,11 @@ julia> get_objectives(augmecon_model)
 ```
 """
 function get_objetives!(augmecon_model::AugmeconJuMP)
-    return value.(augmecon_model.objectives)
+    if has_values(augmecon_model.model)
+        return value.(augmecon_model.objectives)
+    else
+        return -Inf * augmecon_model.sense_value
+    end
 end
 
 """
