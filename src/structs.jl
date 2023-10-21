@@ -112,13 +112,27 @@ struct SolutionJuMP{V, F <: AbstractFloat}
 
     SolutionJuMP(model::Model) = begin
         variables = save_variables!(model)
+        sense = objective_sense(model)
+
         return new{typeof(variables), Float64}(
             variables,
-            [objective_value(model)]
+            [get_objective_value(model)]
         )
     end
 end
 
+
+function get_objective_value(model)
+    if has_values(model)
+        return objective_value(model)
+    elseif objective_sense(model) == MAX_SENSE::OptimizationSense
+        return -Inf
+    elseif objective_sense(model) == MIN_SENSE::OptimizationSense
+        return Inf
+    else
+        return 0.0
+    end
+end
 
 """
     get_variables(solution::SolutionJuMP)
