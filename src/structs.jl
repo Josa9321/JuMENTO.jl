@@ -147,7 +147,7 @@ end
 """
     save_variables!(model::Model)
     
-A function that returns the variables from a solution stored at a Model type.
+A function that save the value of variables from a solution stored at a Model type.
 
 # Arguments
 - `model`: A model.
@@ -162,7 +162,9 @@ function save_variables!(model::Model)
     objects_set = model.obj_dict
     for k in keys(objects_set)
         if (typeof(objects_set[k]) <: Array{VariableRef} || typeof(objects_set[k]) <: VariableRef) && k != :objectives_maximize
-            result[k] = value.(objects_set[k])
+            if has_values(model)
+                result[k] = value.(objects_set[k])
+            end
         end
     end
     return result 
