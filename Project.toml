@@ -4,20 +4,12 @@ authors = ["Josa Ferreira"]
 version = "0.1.0"
 
 [deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
-CSV = "0.10"
-Combinatorics = "1"
-DataFrames = "1"
 HiGHS = "1"
 JuMP = "1"
-XLSX = "0.9"
 julia = "1"
 
 [extras]

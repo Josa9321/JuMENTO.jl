@@ -1,4 +1,4 @@
-using JuMP, HiGHS, XLSX
+using JuMP, HiGHS
 
 include("instance.jl")
 include("model.jl")

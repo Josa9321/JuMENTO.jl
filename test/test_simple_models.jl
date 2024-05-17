@@ -43,6 +43,15 @@ function is_solution_in_frontier(solution, frontier)
     return false
 end
 
+function solutions_are_equals(solution_1, solution_2)
+    for o in eachindex(solution_1.objectives)
+        if !isapprox(solution_1.objectives[o], solution_2[o])
+            return false
+        end
+    end
+    return true
+end
+
 #########################
 
 function simple_biobjective_table()

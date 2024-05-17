@@ -2,7 +2,6 @@ using JuMENTO
 
 include("simple_models.jl")
 include("test_simple_models.jl")
-include("test_xlsx.jl")
 include("mokp//load.jl")
 
 test_simple_problems(
