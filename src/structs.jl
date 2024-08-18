@@ -179,7 +179,7 @@ function save_variables!(model::Model)
     result = Dict{Symbol, Any}()
     objects_set = model.obj_dict
     for k in keys(objects_set)
-        if (typeof(objects_set[k]) <: Array{VariableRef} || typeof(objects_set[k]) <: VariableRef) && k != :objectives_maximize
+        if (typeof(objects_set[k]) <: Array{VariableRef} || typeof(objects_set[k]) <: VariableRef || typeof(objects_set[k]) <: JuMP.Containers.DenseAxisArray{VariableRef}) && k != :objectives_maximize
             if has_values(model)
                 result[k] = value.(objects_set[k])
             end
