@@ -6,6 +6,7 @@ using CSV
 using Printf
 using PrettyTables
 using LinearAlgebra
+using Statistics
 
 include("structs.jl")
 include("dominance_relations.jl")
