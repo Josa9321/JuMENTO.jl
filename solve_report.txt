@@ -1,0 +1,10 @@
+Solve Report Summary:
+Total solutions: 10
+iterations: 10.0
+tables_generation_total_time: 1.2409999370574951
+total_time: 3.61299991607666
+table_solve_time: 0.01212453842163086
+has_viable_nadir_ideal: 1.0
+start_time_global: 1.75329507496e9
+recursion_total_time: 1.7189998626708984
+solve_time: 0.0012288093566894531
