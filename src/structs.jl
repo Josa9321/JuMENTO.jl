@@ -44,6 +44,7 @@ struct AugmeconJuMP{N <: Integer, B <: Integer, F <: AbstractFloat}
     report::SolveReport{F, B}
     
     AugmeconJuMP(model, objectives, options) = begin
+        print("Initializing AugmeconJuMP with $(length(objectives)) objectives.\n")
         sense_in_num = convert_sense_to_num(options[:objective_sense_set])
         O = eachindex(objectives)
         @variable(model, objectives_maximize[O])

@@ -11,7 +11,9 @@ Generate the Pareto set from a given solutions_set.
 - `pareto_set`: A vector containing the solutions that compose the Pareto set.
 """
 function generate_pareto(solutions_set, efficiency_eps)
+
     if length(solutions_set) == 0 
+        print("The solution set is empty.\n")
         return solutions_set
     end
 
@@ -21,9 +23,10 @@ function generate_pareto(solutions_set, efficiency_eps)
             push!(pareto_set, solution)
         end
     end
+    pareto_plot(solutions_set)
+    print("Plotting Pareto set.\n")
     return pareto_set
 end
-
 
 """
     is_efficient(solution::SolutionJuMP, solutions_set, error)
@@ -64,6 +67,7 @@ Checks whether a solution is dominated by another solution, where higher values 
 # Returns
 - `result::Bool`: A boolean value indicating if the given solution is dominated by the given solution.
 """
+
 function is_dominated_by(;solution_to_check, dominating_solution, error)
     at_least_better_in_one = false
     as_good_in_all = true
@@ -84,6 +88,7 @@ end
 
 Checks whether a solution is present in a given frontier and returns a boolean value indicating its existence in the frontier.
 """
+
 function is_solution_in_frontier(solution, frontier, error)
     for sol_k in frontier
         if solutions_are_equals(solution, sol_k, error)
@@ -107,3 +112,64 @@ function solutions_are_equals(solution_1, solution_2, error)
     end
     return true
 end
+
+
+"""
+    Function that asks the user if he wants to plot the results
+"""
+function plot_result(frontier, model::Model)
+
+    plot_both(frontier, model)
+
+end
+
+"""
+    Function that plots the Pareto frontier and returns the plot object
+"""
+function pareto_plot(frontier)
+    x_p = [s.objectives[1] for s in frontier]
+    y_p = [s.objectives[2] for s in frontier]
+
+    p = scatter(x_p, y_p, label="Pareto Frontier", marker=:circle, color=:red, markersize=8)
+    xlabel!("First Criterion")
+    ylabel!("Second Criterion")
+    title!("Pareto Frontier")
+    return p
+end
+
+"""
+    Function that plots the variables space and returns the plot object
+"""
+function variables_plot(frontier, model::Model)
+    variables = save_variables!(model)
+    size = length(variables) - 1
+    if size != 2
+        print("Invalid number of variables for plotting\n.")
+        return nothing
+    end
+
+    x_variable = [s.variables[:x][1] for s in frontier]
+    y_variable = [s.variables[:x][2] for s in frontier]
+
+    p = scatter(x_variable, y_variable, label="Solutions", marker=:star, color=:blue, markersize=8)
+    xlabel!("First Variable")
+    ylabel!("Second Variable")
+    title!("Variable Space")
+    return p
+end
+
+function plot_both(frontier, model::Model)
+    p1 = plot(pareto_plot(frontier))
+
+    p2 = variables_plot(frontier, model)
+    
+    if p2 !== nothing
+        plot(p1, p2, layout = (1, 2))
+        display(plot(p1, p2, layout = (1, 2)))
+    else
+        @warn "Variables space cannot be plotted due to invalid number of variables."
+        plot(p1)
+        display(plot(p1))
+    end
+end
+
