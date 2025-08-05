@@ -1,8 +1,7 @@
 function test_simple_problems(model_function, saved_frontier, saved_table; is_augmecon_2=false)
-    frontier, results = run_augmecon_for_simple_problems(model_function, 1, saved_frontier, nothing; augmecon_2=is_augmecon_2)
+    frontier, results = run_augmecon_for_simple_problems(model_function, saved_frontier, nothing; augmecon_2=is_augmecon_2)
     test_payoff_tables(results.table, saved_table)
     test_frontiers(frontier, saved_frontier)
-    println("$(model_function) $(is_augmecon_2 ? "AUGMECON_2" : "AUGMECON") passed.")
     return nothing
 end
 
@@ -10,32 +9,30 @@ end
 #####
 ########################
 
-function run_augmecon_for_simple_problems(model_function, plot, saved_frontier, reference_point; augmecon_2=false)
+function run_augmecon_for_simple_problems(model_function, saved_frontier, reference_point; augmecon_2=false)
     model, objs, objs_sense = model_function()
-    frontier, report = augmecon(model, objs, plot; saved_frontier=saved_frontier, reference_point=reference_point, grid_points=10, bypass=augmecon_2, objective_sense_set=objs_sense)
+    frontier, report = augmecon(model, objs; saved_frontier=saved_frontier, reference_point=reference_point, grid_points=10, bypass=augmecon_2, objective_sense_set=objs_sense)
     return frontier, report
 end
 
 function test_payoff_tables(table_1, table_2)
-    for i in axes(table_1, 1)
-        for j in axes(table_1, 2)
-            @assert isapprox(table_1[i, j], table_2[i, j]) "Payoff tables should be equal"
-        end
+    for (i, j) in Iterators.product(axes(table_1)...)
+        @test isapprox(table_1[i, j], table_2[i, j])
     end
 end
 
 function test_frontiers(frontier_1, frontier_2)
-    @assert size(frontier_1, 2) == size(frontier_2, 2) "Frontiers should have the same number of solutions"
-    for i in 1:size(frontier_1, 2)
-        solution = frontier_1[:, i]
-        @assert is_solution_in_frontier(solution, frontier_2) "Solution $(solution) is not in frontier"
+    @test size(frontier_1, 2) == size(frontier_2, 2)
+    for i in axes(frontier_1, 2)
+        solution = @view frontier_1[:, i]
+        @test is_solution_in_frontier(solution, frontier_2)
     end
 end
 
 #########################
 
 function is_solution_in_frontier(solution, frontier)
-    for i in 1:size(frontier, 2)
+    for i in axes(frontier, 2)
         sol_k = frontier[:, i]
         if solutions_are_equals(solution, sol_k)
             return true

@@ -1,4 +1,8 @@
-function print_metrics(sp, gd, dm, me, ve, mp, er, hy)
+function print_metrics(sp, gd, dm, me, ve, mp, er, hy, options)
+    if options[:print_level] == 0
+        return nothing
+    end
+
     println("=========== METRICS ===========")
     @printf("Spacing metric       : %.4f\n", sp)
     if gd!==nothing
@@ -19,6 +23,7 @@ function print_metrics(sp, gd, dm, me, ve, mp, er, hy)
     end
 
     println("=============================================")
+    return
 end
 
 
@@ -29,12 +34,12 @@ function generate_reference_point(frontier::Matrix{Float64})
     return reference_point
 end
 
-function test_with_get(frontier::Matrix{Float64}, reference::Matrix{Float64}; reference_point=nothing)
+function test_with_get(frontier::Matrix{Float64}, reference::Matrix{Float64}, options; reference_point=nothing)
     gd = nothing
 
     if reference_point === nothing
         reference_point = generate_reference_point(frontier)
-        println("Automatic Reference Point Used: ", reference_point)
+        println_if_necessary("Automatic Reference Point Used: $(reference_point)", options)
     end
 
     sp = spacing_metric(frontier)
@@ -50,8 +55,8 @@ function test_with_get(frontier::Matrix{Float64}, reference::Matrix{Float64}; re
     if num_obj == 2
         hv = hypervolume(frontier, reference_point)
     else
-        println("Hypervolume only supports 2D")
+        println_if_necessary("Hypervolume only supports 2D", options)
     end
 
-    print_metrics(sp, gd, dm, me, ve, mp, er, hv)
+    print_metrics(sp, gd, dm, me, ve, mp, er, hv, options)
 end

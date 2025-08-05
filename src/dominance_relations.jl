@@ -24,7 +24,6 @@ function generate_pareto(solutions_set, efficiency_eps)
         end
     end
     pareto_plot(solutions_set)
-    print("Plotting Pareto set.\n")
     return pareto_set
 end
 
@@ -144,7 +143,7 @@ function variables_plot(frontier, model::Model)
     variables = save_variables!(model)
     size = length(variables) - 1
     if size != 2
-        print("Invalid number of variables for plotting\n.")
+        @warn "Invalid number of variables for plotting\n."
         return nothing
     end
 

@@ -56,23 +56,21 @@ frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense
 
 """
 function augmecon(
-    model::Model, objectives::Vector{VariableRef}, plot::Int=0; saved_frontier::Matrix{Float64}=Matrix{Float64}(undef, 0, 0), reference_point=nothing, user_options...)
-    return augmecon(model, objectives, plot, saved_frontier, reference_point, user_options)
+    model::Model, objectives::Vector{VariableRef}; saved_frontier::Matrix{Float64}=Matrix{Float64}(undef, 0, 0), reference_point=nothing, user_options...)
+    return augmecon(model, objectives, saved_frontier, reference_point, user_options)
 end
-function augmecon(model::Model, objectives::Vector{VariableRef}, plot::Int, saved_frontier::Matrix{Float64}, reference_point, user_options)    
-    print("Initializing AUGMECON.\n")
+function augmecon(model::Model, objectives::Vector{VariableRef}, saved_frontier::Matrix{Float64}, reference_point, user_options)    
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(model), objectives)) "At least one objective isn't defined in the model as a constraint"
 
-    options = augmecon_options(plot, user_options, length(objectives)) 
+    options = augmecon_options(user_options, length(objectives)) 
+    
+    println_if_necessary("Initializing AUGMECON with $(length(objectives)) objectives.", options)
+    println_if_necessary("AUGMECON$(options[:bypass]::Bool ? "-2" : "") model initialized.", options)
+
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, options)
     augmecon_model.report.counter["start_time_global"] = start_augmecon_time
-    if (options[:bypass])
-        print("AUGMECON-2 model initialized.\n")
-    else
-        print("AUGMECON model initialized.\n")
-    end
 
     # From now, solutions will be generated
     objectives_rhs = get_objectives_rhs(augmecon_model, options)
@@ -85,31 +83,55 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, plot::Int, save
     if has_viable_ideal_nadir(augmecon_model)
         if options[:bypass]
             s_2 = augmecon_model.model[:s][2]
-                recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, s_2 = s_2)
+            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options, s_2 = s_2)
         else
-            recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_augmecon_time)
-            print("No viable nadir was found. The model may not have a meaningful Pareto frontier.\n")
+            recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options)
+            # println_if_necessary("No viable nadir was found. The model may not have a meaningful Pareto frontier.", options)
         end
     end
 
     solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
     solve_report.counter["total_time"] = toc(start_augmecon_time)
-    print("Total execution time: $(solve_report.counter["total_time"]) seconds\n")
+    
+    println_if_necessary("Total execution time: $(solve_report.counter["total_time"]) seconds", options)
+    
     convert_table_to_correct_sense!(augmecon_model)
 
     frontier_1 = generate_pareto(frontier, options[:dominance_eps])
-    if plot == 1
-        plot_result(frontier_1, model)
-    end
 
-    save_results_to_file(frontier_1, solve_report)
-    print("Execution completed\n")
+    plot_frontier_if_necessary(frontier_1, model, options)
+    save_results_to_file(frontier_1, solve_report, options)
+    println_if_necessary("Execution completed\n", options)
+    
     frontier_1 = hcat([s.objectives for s in frontier_1]...)
     if saved_frontier !== nothing
-        test_with_get(frontier_1, saved_frontier; reference_point=reference_point)
+        test_with_get(frontier_1, saved_frontier, options; reference_point=reference_point)
     end
 
     return frontier_1, solve_report
+end
+
+function println_if_necessary(message, options)
+    if options[:print_level]::Int64 > 0
+        println(message)
+    end
+    return
+end
+
+function printf_if_necessary(options, message_format, variables...)
+    if options[:print_level]::Int64 > 0
+        message_to_print = Printf.format(Printf.Format(message_format), variables...)
+        println(message_to_print)
+    end
+    return 
+end
+
+function plot_frontier_if_necessary(frontier, model, options)
+    if options[:plot]::Bool
+        println_if_necessary("Plotting Pareto set.\n", options)
+        plot_result(frontier, model)
+    end
+    return 
 end
 
 """
@@ -133,7 +155,7 @@ This function computes and returns the range of each objective in the optimizati
 """
 function get_objectives_rhs(augmecon_model, options)
     if :nadir in keys(options)
-        ideal_point = get_ideal_point(augmecon_model)
+        ideal_point = get_ideal_point(augmecon_model, options)
         return set_objectives_rhs_range(ideal_point, options)
     end
     payoff_table!(augmecon_model) 
@@ -145,13 +167,13 @@ end
 
 This function computes and returns the ideal point of the optimization problem. It is intended for use when a user specifies a nadir point in the options.
 """
-function get_ideal_point(augmecon_model)
+function get_ideal_point(augmecon_model, options)
     objectives = augmecon_model.objectives_maximize
 
     start_time = tic()
-    print("Calculating ideal point\n")
+    println_if_necessary("Calculating ideal point\n", options)
     ideal_point = zeros(length(objectives))
-    print("Checking if model has viable idel and nadir points.\n")
+    println_if_necessary("Checking if model has viable idel and nadir points.\n", options)
     for i in 2:length(ideal_point)
         if !has_viable_ideal_nadir(augmecon_model)
             continue
@@ -166,7 +188,7 @@ function get_ideal_point(augmecon_model)
     end
     solve_report = augmecon_model.report
     solve_report.counter["tables_generation_total_time"] = toc(start_time)
-    print("Calculated ideal point: $ideal_point\n")
+    println_if_necessary("Calculated ideal point: $ideal_point\n", options)
     @objective(augmecon_model.model, Max, 0.0)
     return ideal_point
 end
@@ -341,23 +363,23 @@ end
 
 This function recursively solves the model using the AUGMECON method with the bypass method.
 """
-function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time; o = num_objectives(augmecon_model), s_2)
+function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time, options; o = num_objectives(augmecon_model), s_2)
     i_k = 0
     while i_k < length(objectives_rhs[o]) # augmecon_model.grid_points
         i_k += 1
         set_normalized_rhs(augmecon_model.model[:other_objectives][o], objectives_rhs[o][i_k])
         if o > 2
-            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_time, o = o - 1, s_2 = s_2)
+            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_time, options, o = o - 1, s_2 = s_2)
         else
             global grid_counter
             grid_counter += 1
-            optimize_mo_method_model!(augmecon_model, frontier, start_time)
+            optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
             if JuMP.has_values(augmecon_model.model)
                 push!(frontier, SolutionJuMP(augmecon_model))
                 b = get_number_of_redundant_iterations(s_2, objectives_rhs[o])
                 i_k += b
             else
-            print("No solution found for objective $o.\n")
+                println_if_necessary("No solution found for objective $o.", options)
                 i_k = augmecon_model.grid_points
             end
         end
@@ -370,20 +392,26 @@ end
 
 This function recursively solves the model using the AUGMECON method.
 """
-function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time; o = 2)
+function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time, options; o = 2)
 
     for eps in objectives_rhs[o]
         set_normalized_rhs(augmecon_model.model[:other_objectives][o], eps)
         if o < num_objectives(augmecon_model)
-            recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_time, o = o + 1)
+            recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_time, options, o = o + 1)
         else
             global grid_counter
             grid_counter += 1
-            optimize_mo_method_model!(augmecon_model, frontier, start_time)
+            
+            printf_if_necessary(options, 
+                "\n%-12s | %-10s | %-23s | %-17s\n", "Iterations", "Time (s)", 
+                "Accumulated solutions", "% Grid Explored"
+            )
+            
+            optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
             if JuMP.has_values(augmecon_model.model)
                 push!(frontier, SolutionJuMP(augmecon_model))
             else
-                print("No viable solution found for the objective $o.\n")
+                println_if_necessary("No viable solution found for the objective $o.", options)
                 break
             end
         end
@@ -405,7 +433,7 @@ function convert_table_to_correct_sense!(augmecon_model::AugmeconJuMP)
     return table
 end
 
-function optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vector{SolutionJuMP}, start_time::Float64)
+function optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vector{SolutionJuMP}, start_time::Float64, options)
     optimize!(augmecon_model.model)
     global grid_counter
 
@@ -424,24 +452,17 @@ function optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vecto
     global data_log
     data_log = vcat(data_log, reshape(line, 1, :))
 
-    if !header_done
-        @printf("\n%-12s | %-10s | %-23s | %-17s\n",
-        "Iterations", "Time (s)", "Accumulated solutions", "% Grid Explored")
-        global header_done = true
-    end
+    printf_if_necessary(options, "%-12d | %-10.4f | %-23d | %-17.2f\n", iter, time_elapsed, num_sol, grid)
 
-    @printf("%-12d | %-10.4f | %-23d | %-17.2f\n",
-    iter, time_elapsed, num_sol, grid)
-
-    open("full_table.txt", "w") do io
-        pretty_table(io, data_log;
-            header = header_log,
-            formatters = ft_printf("%.3f", 2:4),
-            tf = tf_unicode_rounded,
-            max_num_of_rows = typemax(Int),
-            limit_printing = false
-        )
-    end
+    # open("full_table.txt", "w") do io
+    #     pretty_table(io, data_log;
+    #         header = header_log,
+    #         formatters = ft_printf("%.3f", 2:4),
+    #         tf = tf_unicode_rounded,
+    #         max_num_of_rows = typemax(Int),
+    #         limit_printing = false
+    #     )
+    # end
 
     return augmecon_model
 end
@@ -466,7 +487,7 @@ end
     Function that saves the results
 """
 
-function save_results_to_file(frontier, solve_report)
+function save_results_to_file(frontier, solve_report, options)
     open("pareto_front.txt", "w") do file
         println(file, "Pareto Front Solutions:")
         for solution in frontier
@@ -487,7 +508,7 @@ function save_results_to_file(frontier, solve_report)
         end
     end
 
-    print("Results saved in 'pareto_front.txt', 'solve_report.txt', and 'full_table.txt' files\n")
+    println_if_necessary("Results saved in 'pareto_front.txt', 'solve_report.txt', and 'full_table.txt' files", options)
 end
 
 

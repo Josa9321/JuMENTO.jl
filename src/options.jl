@@ -1,12 +1,6 @@
 global count1 = 0
 
-function augmecon_options(plot, user_options, num_objectives)
-    if (plot == 1)
-        print("Generate graph\n")
-    else
-        print("Don't generate graph\n")
-    end
-
+function augmecon_options(user_options, num_objectives)
     options = set_options_dict(user_options, num_objectives)
     verify_user_keys(options)
     add_default_options_if_needed!(options)
@@ -26,6 +20,7 @@ function verify_user_keys(user_options)
         :dominance_eps,
         :num_objectives,
         :print_level,
+        :plot,
     ]
 
     for key in user_keys
@@ -51,20 +46,15 @@ function add_default_options_if_needed!(options)
     add_default!(options, :penalty, 1e-3)
     add_default!(options, :bypass, true)
     add_default!(options, :dominance_eps, 1e-8)
-    add_default!(options, :print_level, 1)
-
+    add_default!(options, :print_level, 0)
+    add_default!(options, :plot, false)
     return options
 end
 
 
 function add_default!(options_set, key, value)
-    global count1
-    if (count1 == 0)
-        print("Added default options\n")
-        count1 =+ 1
-        !(key in keys(options_set)) ? options_set[key] = value : nothing
-    else
-        !(key in keys(options_set)) ? options_set[key] = value : nothing
+    if !(key in keys(options_set)) 
+        options_set[key] = value
     end
 end
 
@@ -78,8 +68,12 @@ function verify_options(options)
     verify_penalty(options) 
     verify_objectives_sense_set(options)
     verify_nadir(options)
+    verify_plot_option(options)
 
+    print_options(options)
 end
+
+verify_plot_option(options) = @assert typeof(options[:plot]) == Bool "plot option should be a Bool type"
 
 verify_bypass(options) = @assert typeof(options[:bypass]) == Bool "bypass option should be a Bool type"
 
@@ -87,7 +81,6 @@ verify_print_level(options) = @assert typeof(options[:print_level]) == Int64 "pr
 
 function verify_grid_points(options)
     grid_points = options[:grid_points]
-    print("Grid points: $grid_points.\n")
     @assert typeof(grid_points) == Int64 "Number of grid_points should be integer"
     @assert grid_points > 1 "Number of grid_points should be higher than 1"
     return nothing
@@ -99,14 +92,12 @@ function verify_penalty(options)
     if !(penalty <= 1e-3 && penalty >= 1e-6) 
         @warn "Penalty is outside the interval suggested by the AUGMECON authors (1e-3, 1e-6)"
     else
-        print("Penalty: $penalty. \n")
     end
     return nothing
 end
 
 function verify_objectives_sense_set(options)
     objective_sense_set = options[:objective_sense_set]
-    print("Objective sense: $objective_sense_set\n")
     @assert typeof(objective_sense_set) == Vector{String} "The sense set isn't a Float Vector"
     for sense in objective_sense_set
         @assert (sense == "Max" || sense == "Min") """Objective sense should be "Max" or "Min" """
@@ -116,12 +107,28 @@ function verify_objectives_sense_set(options)
 end
 
 function verify_nadir(options)
-    try 
+    if :nadir in keys(options)
         pushfirst!(options[:nadir], 0.0)
         nadir = options[:nadir]
         @assert typeof(nadir) == Vector{Float64} "typeof nadir isn't equal to Vector{Float64}"
         @assert length(nadir) == options[:num_objectives] "Number of objectives in nadir point should be equal to the number of objectives"
-        print("Nadir: $nadir.\n")
-    catch
     end
+    return 
+end
+
+function print_options(options)
+    grid_points = options[:grid_points]
+    println_if_necessary("Grid points: $grid_points.\n", options)
+
+    penalty = options[:penalty]
+    println_if_necessary("Penalty: $penalty. \n", options)
+
+    objective_sense_set = options[:objective_sense_set]
+    println_if_necessary("Objective sense: $objective_sense_set\n", options)
+
+    if :nadir in keys(options)
+        nadir = options[:nadir]
+        println_if_necessary("Nadir: $nadir.\n", options)
+    end
+    return 
 end
