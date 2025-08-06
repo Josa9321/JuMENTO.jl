@@ -67,6 +67,7 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, saved_frontier:
     
     println_if_necessary("Initializing AUGMECON with $(length(objectives)) objectives.", options)
     println_if_necessary("AUGMECON$(options[:bypass]::Bool ? "-2" : "") model initialized.", options)
+    print_options(options)
 
     start_augmecon_time = tic()
     augmecon_model = AugmeconJuMP(model, objectives, options)
@@ -81,6 +82,9 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, saved_frontier:
     augmecon_model.report.counter["start_time_global"] = start_augmecon_time
     frontier = SolutionJuMP[]
     if has_viable_ideal_nadir(augmecon_model)
+        printf_if_necessary(options, "%-12s | %-10s | %-23s | %-17s", 
+            "Iterations", "Time (s)", "Accumulated solutions", "% Grid Explored")
+
         if options[:bypass]
             s_2 = augmecon_model.model[:s][2]
             recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options, s_2 = s_2)
@@ -94,14 +98,14 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, saved_frontier:
     solve_report.counter["total_time"] = toc(start_augmecon_time)
     
     println_if_necessary("Total execution time: $(solve_report.counter["total_time"]) seconds", options)
-    
+    println_if_necessary("Execution completed\n", options)
+
     convert_table_to_correct_sense!(augmecon_model)
 
     frontier_1 = generate_pareto(frontier, options[:dominance_eps])
 
     plot_frontier_if_necessary(frontier_1, model, options)
     save_results_to_file(frontier_1, solve_report, options)
-    println_if_necessary("Execution completed\n", options)
     
     frontier_1 = hcat([s.objectives for s in frontier_1]...)
     if saved_frontier !== nothing
@@ -128,7 +132,7 @@ end
 
 function plot_frontier_if_necessary(frontier, model, options)
     if options[:plot]::Bool
-        println_if_necessary("Plotting Pareto set.\n", options)
+        println_if_necessary("Plotting Pareto set.", options)
         plot_result(frontier, model)
     end
     return 
@@ -171,9 +175,9 @@ function get_ideal_point(augmecon_model, options)
     objectives = augmecon_model.objectives_maximize
 
     start_time = tic()
-    println_if_necessary("Calculating ideal point\n", options)
+    println_if_necessary("Calculating ideal point", options)
     ideal_point = zeros(length(objectives))
-    println_if_necessary("Checking if model has viable idel and nadir points.\n", options)
+    println_if_necessary("Checking if model has viable idel and nadir points.", options)
     for i in 2:length(ideal_point)
         if !has_viable_ideal_nadir(augmecon_model)
             continue
@@ -188,7 +192,7 @@ function get_ideal_point(augmecon_model, options)
     end
     solve_report = augmecon_model.report
     solve_report.counter["tables_generation_total_time"] = toc(start_time)
-    println_if_necessary("Calculated ideal point: $ideal_point\n", options)
+    println_if_necessary("Calculated ideal point: $ideal_point", options)
     @objective(augmecon_model.model, Max, 0.0)
     return ideal_point
 end
@@ -402,11 +406,6 @@ function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_
             global grid_counter
             grid_counter += 1
             
-            printf_if_necessary(options, 
-                "\n%-12s | %-10s | %-23s | %-17s\n", "Iterations", "Time (s)", 
-                "Accumulated solutions", "% Grid Explored"
-            )
-            
             optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
             if JuMP.has_values(augmecon_model.model)
                 push!(frontier, SolutionJuMP(augmecon_model))
@@ -452,7 +451,7 @@ function optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vecto
     global data_log
     data_log = vcat(data_log, reshape(line, 1, :))
 
-    printf_if_necessary(options, "%-12d | %-10.4f | %-23d | %-17.2f\n", iter, time_elapsed, num_sol, grid)
+    printf_if_necessary(options, "%-12d | %-10.4f | %-23d | %-17.2f", iter, time_elapsed, num_sol, grid)
 
     # open("full_table.txt", "w") do io
     #     pretty_table(io, data_log;

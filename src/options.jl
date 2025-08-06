@@ -69,8 +69,6 @@ function verify_options(options)
     verify_objectives_sense_set(options)
     verify_nadir(options)
     verify_plot_option(options)
-
-    print_options(options)
 end
 
 verify_plot_option(options) = @assert typeof(options[:plot]) == Bool "plot option should be a Bool type"
@@ -118,17 +116,17 @@ end
 
 function print_options(options)
     grid_points = options[:grid_points]
-    println_if_necessary("Grid points: $grid_points.\n", options)
+    println_if_necessary("Grid points: $grid_points", options)
 
     penalty = options[:penalty]
-    println_if_necessary("Penalty: $penalty. \n", options)
+    println_if_necessary("Penalty: $penalty", options)
 
     objective_sense_set = options[:objective_sense_set]
-    println_if_necessary("Objective sense: $objective_sense_set\n", options)
+    println_if_necessary("Objective sense: $objective_sense_set", options)
 
     if :nadir in keys(options)
         nadir = options[:nadir]
-        println_if_necessary("Nadir: $nadir.\n", options)
+        println_if_necessary("Nadir: $nadir", options)
     end
     return 
 end
