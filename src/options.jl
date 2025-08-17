@@ -1,5 +1,3 @@
-global count1 = 0
-
 function augmecon_options(user_options, num_objectives)
     options = set_options_dict(user_options, num_objectives)
     verify_user_keys(options)
@@ -20,7 +18,6 @@ function verify_user_keys(user_options)
         :dominance_eps,
         :num_objectives,
         :print_level,
-        :plot,
     ]
 
     for key in user_keys
@@ -47,7 +44,6 @@ function add_default_options_if_needed!(options)
     add_default!(options, :bypass, true)
     add_default!(options, :dominance_eps, 1e-8)
     add_default!(options, :print_level, 0)
-    add_default!(options, :plot, false)
     return options
 end
 
@@ -68,10 +64,7 @@ function verify_options(options)
     verify_penalty(options) 
     verify_objectives_sense_set(options)
     verify_nadir(options)
-    verify_plot_option(options)
 end
-
-verify_plot_option(options) = @assert typeof(options[:plot]) == Bool "plot option should be a Bool type"
 
 verify_bypass(options) = @assert typeof(options[:bypass]) == Bool "bypass option should be a Bool type"
 
@@ -79,6 +72,7 @@ verify_print_level(options) = @assert typeof(options[:print_level]) == Int64 "pr
 
 function verify_grid_points(options)
     grid_points = options[:grid_points]
+    println_if_necessary("Grid points: $grid_points.", options)
     @assert typeof(grid_points) == Int64 "Number of grid_points should be integer"
     @assert grid_points > 1 "Number of grid_points should be higher than 1"
     return nothing
@@ -90,6 +84,7 @@ function verify_penalty(options)
     if !(penalty <= 1e-3 && penalty >= 1e-6) 
         @warn "Penalty is outside the interval suggested by the AUGMECON authors (1e-3, 1e-6)"
     else
+        println_if_necessary("Penalty: $penalty. \n", options)
     end
     return nothing
 end
