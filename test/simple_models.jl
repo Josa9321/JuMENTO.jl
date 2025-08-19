@@ -4,19 +4,15 @@ function simple_biobjective_problem()
     model = init_configured_model()
     @variables model begin
         x[1:2] >= 0
-        objs[1:2]
     end 
 
     @constraints model begin
         c1, x[1] <= 20
         c2, x[2] <= 40
         c3, 5*x[1] + 4*x[2] <= 200
-
-        objective_1, objs[1] == x[1]
-        objective_2, objs[2] == 3*x[1] + 4*x[2]
     end
-    objs_sense = ["Max", "Max"]
-    return model, objs, objs_sense
+    @objective(model, Max, [x[1],  3*x[1] + 4*x[2]])
+    return model
 end
 
 function simple_triobjective_problem()
@@ -35,8 +31,6 @@ function simple_triobjective_problem()
         RES >= 0
         RES1 >= 0
         RES3 >= 0
-
-        objs[1:3]
     end 
 
     @constraints model begin
@@ -51,13 +45,13 @@ function simple_triobjective_problem()
         c9, LIGN1 + NG1 + RES1 >= 38400
         c10, LIGN2 + OIL2 + NG2 >= 19200
         c11, OIL3 + NG3 + RES3 >= 6400
-
-        objective_1, objs[1] == (30.0 * LIGN + 75.0 * OIL + 60.0 * NG + 90.0 * RES)
-        objective_2, objs[2] == (1.44 * LIGN + 0.72 * OIL + 0.45 * NG)
-        objective_3, objs[3] == (OIL + NG)
     end
-    objs_sense = ["Min", "Min", "Min"]
-    return model, objs, objs_sense
+    @objective(model, Min, [
+        (30.0 * LIGN + 75.0 * OIL + 60.0 * NG + 90.0 * RES),
+        (1.44 * LIGN + 0.72 * OIL + 0.45 * NG),
+        (OIL + NG)
+    ])
+    return model
 end
 
 function init_configured_model()

@@ -10,8 +10,8 @@ end
 ########################
 
 function run_augmecon_for_simple_problems(model_function; augmecon_2=false)
-    model, objs, objs_sense = model_function()
-    frontier, report = augmecon(model, objs; grid_points=10, bypass=augmecon_2, objective_sense_set=objs_sense, print_level=1)
+    model = model_function()
+    frontier, report = augmecon(model; grid_points=10, bypass=augmecon_2, print_level=0)
     return frontier, report
 end
 
