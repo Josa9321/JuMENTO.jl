@@ -1,8 +1,4 @@
-function print_metrics(sp, gd, dm, me, ve, mp, er, hy, options)
-    if options[:print_level] == 0
-        return nothing
-    end
-
+function print_metrics(sp, gd, dm, me, ve, mp, er, hy)
     println("=========== METRICS ===========")
     @printf("Spacing metric       : %.4f\n", sp)
     if gd!==nothing
@@ -13,33 +9,62 @@ function print_metrics(sp, gd, dm, me, ve, mp, er, hy, options)
         @printf("Error variance       : %.4f\n", ve)
         @printf("Error mean (%%)       : %.4f\n", mp)
         @printf("Error ratio          : %.4f\n", er)
+        @printf("Hypervolume          : %.4e\n", hy)
         println("---------------------------------------------")
     end
 
-    if hy !== missing
-        @printf("Hypervolume          : %.4e\n", hy)
-    else
-        println("Hypervolume          : Only 2D Calculated")
-    end
-
     println("=============================================")
-    return
 end
 
+function generate_reference_point(frontier)
+    alpha = 1.1
 
-function generate_reference_point(frontier::Matrix{Float64})
-    alpha=1.1
-    max_values = maximum(frontier, dims=2)
+    if frontier isa Vector{<:SolutionJuMP}
+        frontier = [sol.objectives for sol in frontier]
+    end
+
+    if frontier isa Vector{<:Vector}
+        frontier = Matrix(hcat(frontier...)')
+    end
+
+    max_values = maximum(frontier, dims=1)
     reference_point = vec(alpha .* max_values)
     return reference_point
 end
 
-function test_with_get(frontier::Matrix{Float64}, reference::Matrix{Float64}, options; reference_point=nothing)
+function test_with_get(frontier, reference=nothing; reference_point=nothing, objs_sense=nothing)
+
+    if frontier isa Vector
+        if eltype(frontier) <: SolutionJuMP
+            frontier = hcat([sol.objectives for sol in frontier]...)'
+        elseif eltype(frontier) <: SolutionNSGA
+            frontier = hcat([sol.objectives for sol in frontier]...)'
+        elseif eltype(frontier) <: AbstractVector
+            frontier = hcat(frontier...)'
+        else
+            error("No recognized format: $(eltype(frontier))")
+        end
+    end
+
+    if reference !== nothing
+        if reference isa Vector
+            if eltype(reference) <: SolutionJuMP
+                reference = hcat([sol.objectives for sol in reference]...)'
+            elseif eltype(reference) <: SolutionNSGA
+                reference = hcat([sol.objectives for sol in reference]...)'
+            elseif eltype(reference) <: AbstractVector
+                reference = hcat(reference...)'
+            else
+                error("No recognized format: $(eltype(reference))")
+            end
+        end
+    end
+
     gd = nothing
 
     if reference_point === nothing
         reference_point = generate_reference_point(frontier)
-        println_if_necessary("Automatic Reference Point Used: $(reference_point)", options)
+        println("Automatic Reference Point Used: ", reference_point)
     end
 
     sp = spacing_metric(frontier)
@@ -50,13 +75,7 @@ function test_with_get(frontier::Matrix{Float64}, reference::Matrix{Float64}, op
         er = error_ratio(frontier, reference)
     end
 
-    hv = missing
-    num_obj = size(frontier, 1)
-    if num_obj == 2
-        hv = hypervolume(frontier, reference_point)
-    else
-        println_if_necessary("Hypervolume only supports 2D", options)
-    end
+    hv = hypervolume(frontier, reference_point)
 
-    print_metrics(sp, gd, dm, me, ve, mp, er, hv, options)
+    print_metrics(sp, gd, dm, me, ve, mp, er, hv)
 end
