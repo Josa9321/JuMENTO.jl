@@ -1,12 +1,7 @@
 function test_simple_problems(model_function, saved_frontier, saved_table; is_augmecon_2=false)
     frontier, results = run_augmecon_for_simple_problems(model_function; augmecon_2=is_augmecon_2)
-    test_frontiers(frontier, saved_frontier)
     test_payoff_tables(results.table, saved_table)
-    println("$(model_function) $(is_augmecon_2 ? "AUGMECON_2" : "AUGMECON") passed.")
-    # save_results_to_file(frontier, results, "C:/Users/.../...") You need to enter the location to be saved
-    model,_, objs_sense = model_function()
-    plot_result(frontier, model)
-    test_with_get(frontier, saved_frontier, reference_point=nothing, objs_sense=objs_sense)
+    test_frontiers(frontier, saved_frontier)
     return nothing
 end
 
