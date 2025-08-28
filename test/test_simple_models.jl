@@ -1,12 +1,19 @@
 function test_simple_problems(model_function, saved_frontier, saved_table; is_augmecon_2=false)
     frontier, results = run_augmecon_for_simple_problems(model_function; augmecon_2=is_augmecon_2)
-    test_frontiers(frontier, saved_frontier)
     test_payoff_tables(results.table, saved_table)
-    println("$(model_function) $(is_augmecon_2 ? "AUGMECON_2" : "AUGMECON") passed.")
-    # save_results_to_file(frontier, results, "C:/Users/.../...") You need to enter the location to be saved
-    model,_, objs_sense = model_function()
-    plot_result(frontier, model)
-    test_with_get(frontier, saved_frontier, reference_point=nothing, objs_sense=objs_sense)
+    test_frontiers(frontier, saved_frontier)
+    return nothing
+end
+
+function test_simple_problems_nsga2_2objectives(model_function)
+    model = model_function()
+    frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:quadratic,default_range=100.0)
+    return nothing
+end
+
+function test_simple_problems_nsga2_3objectives(model_function)
+    model = model_function()
+    frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:linear,default_range=100000.0)
     return nothing
 end
 
@@ -15,8 +22,8 @@ end
 ########################
 
 function run_augmecon_for_simple_problems(model_function; augmecon_2=false)
-    model, objs, objs_sense = model_function()
-    frontier, report = augmecon(model, objs; grid_points=10, bypass=augmecon_2, objective_sense_set=objs_sense, print_level=1)
+    model = model_function()
+    frontier, report = augmecon(model; grid_points=10, bypass=augmecon_2, print_level=0)
     return frontier, report
 end
 

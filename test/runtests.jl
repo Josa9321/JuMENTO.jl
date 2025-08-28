@@ -13,3 +13,8 @@ end
     test_simple_problems(simple_biobjective_problem, simple_biobjective_frontier(), simple_biobjective_table(), is_augmecon_2 = true)
     test_simple_problems(simple_triobjective_problem, simple_triobjective_frontier(), simple_triobjective_table(), is_augmecon_2 = true)
 end
+
+@testset "Test NSGA2" begin
+    test_simple_problems_nsga2_2objectives(simple_biobjective_problem)
+    test_simple_problems_nsga2_3objectives(simple_triobjective_problem)
+end

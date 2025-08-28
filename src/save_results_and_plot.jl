@@ -62,23 +62,41 @@ end
 """
     Function that plots the variables space and returns the plot object
 """
-function variables_plot(frontier, model::Model)
-    variables = save_variables!(model)
-    size = length(variables)
-
-    if size != 2
+function variables_plot(data, model=nothing)
+    var_names = Symbol[]
+    
+    if model !== nothing
+        dvars = decision_vars(model)
+        var_names = Symbol.(JuMP.name.(dvars))
+    elseif !isempty(data)
+        first_solution = data[1]
+        if haskey(first_solution.variables, :objs)
+            var_names = [k for k in keys(first_solution.variables) if k != :objs]
+        else
+            var_names = collect(keys(first_solution.variables))
+        end
+    else
+        println("No data.")
         return nothing
     end
 
-    x_variable = [s.variables[:x][1] for s in frontier]
-    y_variable = [s.variables[:x][2] for s in frontier]
+    # Agora checar quantidade
+    if length(var_names) != 2
+        println("Variables space cannot be plotted: variables number = $(length(var_names))")
+        return nothing
+    end
 
-    p = scatter(x_variable, y_variable, label="Solutions", marker=:star, color=:blue, markersize=8)
-    xlabel!("First Variable")
-    ylabel!("Second Variable")
+    # Extrair valores
+    x_vals = [sol.variables[var_names[1]] for sol in data]
+    y_vals = [sol.variables[var_names[2]] for sol in data]
+
+    p = scatter(x_vals, y_vals, label="Solutions", marker=:star, color=:blue, markersize=8)
+    xlabel!(string(var_names[1]))
+    ylabel!(string(var_names[2]))
     title!("Variable Space")
     return p
 end
+
 
 function plot_both(frontier, model::Model)
     p1 = plot(pareto_plot(frontier))

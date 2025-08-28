@@ -46,14 +46,28 @@ frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense
 ```
 
 """
-function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
-    return augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
+function augmecon(model::Model; user_options...)
+    objectives = objective_function(model)
+    options = augmecon_options(user_options, length(objectives)) 
+
+    @variable(model, __my_objective_variables[eachindex(objectives)])
+    @constraint(model, __c_my_objective_variables[i in eachindex(objectives)], __my_objective_variables[i] == objectives[i])
+    sense = objective_sense(model)
+
+    set_objective_sense_set!(options, model, objectives, user_options)
+
+    results = augmecon(model::Model, __my_objective_variables, options)
+
+    reset_model_objectives!(model, objectives, sense)
+    return results
 end
-function augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
+function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
+    options = augmecon_options(user_options, length(objectives)) 
+    return augmecon(model::Model, objectives::Vector{VariableRef}, options)
+end
+function augmecon(model::Model, objectives::Vector{VariableRef}, options)
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(model), objectives)) "At least one objective isn't defined in the model as a constraint"
-
-    options = augmecon_options(user_options, length(objectives)) 
     
     println_if_necessary("Initializing AUGMECON with $(length(objectives)) objectives.", options)
     println_if_necessary("AUGMECON$(options[:bypass]::Bool ? "-2" : "") model initialized.", options)
@@ -95,6 +109,7 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
 
     convert_table_to_correct_sense!(augmecon_model)
     frontier = generate_pareto(frontier, options[:dominance_eps])
+    reset_augmecon_model!(model)
     return frontier, solve_report
 end
 
@@ -111,6 +126,42 @@ function printf_if_necessary(options, message_format, variables...)
         println(message_to_print)
     end
     return 
+end
+
+function set_objective_sense_set!(options, model, objectives, user_options)
+    if !(:objective_sense_set in keys(user_options))
+        options[:objective_sense_set] = objective_sense(model) == MAX_SENSE ? ["Max" for _ in eachindex(objectives)] : ["Min" for _ in eachindex(objectives)]
+    end
+    return nothing
+end
+
+function reset_model_objectives!(model, objectives, sense)
+    delete(model, model[:__c_my_objective_variables])
+    unregister(model, :__c_my_objective_variables)
+    
+    delete(model, model[:__my_objective_variables])
+    unregister(model, :__my_objective_variables)
+    
+    sense == 1 ? @objective(model, Max, objectives) : @objective(model, Min, objectives)
+    return nothing
+end
+
+function reset_augmecon_model!(model)
+    delete(model, model[:objectives_maximize])
+    unregister(model, :objectives_maximize)
+
+    delete(model, model[:objectives_in_correct_sense])
+    unregister(model, :objectives_in_correct_sense)
+
+    delete.(Ref(model), model[:other_objectives])
+    unregister(model, :other_objectives)
+    
+    if :s in keys(model.obj_dict)
+        delete.(Ref(model), model[:s])
+        unregister(model, :s)
+    end
+
+    return nothing
 end
 
 """

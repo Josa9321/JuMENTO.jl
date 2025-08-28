@@ -32,7 +32,7 @@ function generate_reference_point(frontier)
     return reference_point
 end
 
-function test_with_get(frontier, reference=nothing; reference_point=nothing, objs_sense=nothing)
+function test_with_get(frontier, reference=nothing; reference_point=nothing)
 
     if frontier isa Vector
         if eltype(frontier) <: SolutionJuMP
