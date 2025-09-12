@@ -16,7 +16,9 @@ function save_results_to_file(frontier, solve_report, save_dir::String)
     open(pareto_path, "w") do file
         println(file, "Pareto Front Solutions:")
         for solution in frontier
-            obj = solution.variables[:objs]
+            obj = hasproperty(solution, :objectives) ? solution.objectives :
+                  (haskey(solution.variables, :objs) ? solution.variables[:objs] : "N/A")
+
             println(file, "Objectives: ", obj)
 
             vars = Dict(k => v for (k, v) in solution.variables if k != :s && k != :objs)
@@ -63,40 +65,39 @@ end
     Function that plots the variables space and returns the plot object
 """
 function variables_plot(data, model=nothing)
-    var_names = Symbol[]
-    
-    if model !== nothing
-        dvars = decision_vars(model)
-        var_names = Symbol.(JuMP.name.(dvars))
-    elseif !isempty(data)
-        first_solution = data[1]
-        if haskey(first_solution.variables, :objs)
-            var_names = [k for k in keys(first_solution.variables) if k != :objs]
-        else
-            var_names = collect(keys(first_solution.variables))
-        end
-    else
+    if isempty(data)
         println("No data.")
         return nothing
     end
 
-    # Agora checar quantidade
-    if length(var_names) != 2
-        println("Variables space cannot be plotted: variables number = $(length(var_names))")
+    var_names = Symbol[]
+    if model !== nothing
+        dvars = decision_vars(model)
+        var_names = Symbol.(JuMP.name.(dvars)) 
+    else
+        var_names = collect(keys(data[1].variables))
+    end
+
+    if length(var_names) >= 2 && all(haskey(data[1].variables, vn) for vn in var_names[1:2])
+        x_vals = [sol.variables[var_names[1]] for sol in data]
+        y_vals = [sol.variables[var_names[2]] for sol in data]
+        xlabel!(string(var_names[1]))
+        ylabel!(string(var_names[2]))
+
+    elseif haskey(data[1].variables, :x) && length(data[1].variables[:x]) >= 2
+        x_vals = [sol.variables[:x][1] for sol in data]
+        y_vals = [sol.variables[:x][2] for sol in data]
+        xlabel!("x[1]"); ylabel!("x[2]")
+
+    else
+        println("Variables space cannot be plotted. Found keys = $(keys(data[1].variables))")
         return nothing
     end
 
-    # Extrair valores
-    x_vals = [sol.variables[var_names[1]] for sol in data]
-    y_vals = [sol.variables[var_names[2]] for sol in data]
-
     p = scatter(x_vals, y_vals, label="Solutions", marker=:star, color=:blue, markersize=8)
-    xlabel!(string(var_names[1]))
-    ylabel!(string(var_names[2]))
     title!("Variable Space")
     return p
 end
-
 
 function plot_both(frontier, model::Model)
     p1 = plot(pareto_plot(frontier))
