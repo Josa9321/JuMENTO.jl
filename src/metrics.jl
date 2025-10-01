@@ -10,7 +10,7 @@ Returns `true` if `a` is no worse in all objectives and better in at least one.
 """
 function dominates(a::AbstractVector{Float64}, b::AbstractVector{Float64}; sense::Vector{String}=fill("Min", length(a)))
     @assert length(a) == length(b) == length(sense) "Incompatible dimensions."
-    
+
     as_good_in_all = true
     at_least_better_in_one = false
 
@@ -37,6 +37,7 @@ function dominates(a::AbstractVector{Float64}, b::AbstractVector{Float64}; sense
     return as_good_in_all && at_least_better_in_one
 end
 
+
 """
     is_dominated_by_reference(point, reference)
 
@@ -52,10 +53,6 @@ function is_dominated_by_reference(point::Vector{Float64}, reference::AbstractMa
     end
     return false
 end
-
-############################
-# Normalize Front
-############################
 
 function normalize_front(data)
     if data isa Vector
@@ -77,7 +74,6 @@ function normalize_front(data)
         error("Unsupported data type: $(typeof(data))")
     end
 end
-
 
 
 ############################
@@ -210,11 +206,11 @@ function calculate_error_metrics(frontier, reference)
             vs = fsol[k]
             rs = rsol[k]
 
-            mre = 100 * abs(rs - vs) / max(abs(rs), 1e-8)
-            vre = 100 * abs(vs - rs) / max(abs(rs), 1e-8)
+            mre = 100 * abs(rs - vs) / (abs(rs) > 1e-12 ? abs(rs) : abs(rs - vs) + 1e-12)
+            vre = 100 * abs(vs - rs) / (abs(rs) > 1e-12 ? abs(rs) : abs(rs - vs) + 1e-12)
 
-            psi = 100 * abs(rs - vs) / max(abs(vs), 1e-8)
-            beta = 100 * abs(sqrt(abs(rs)) - sqrt(abs(vs))) / max(sqrt(abs(vs)), 1e-8)
+            psi  = 100 * abs(rs - vs) / (abs(vs) > 1e-12 ? abs(vs) : abs(rs - vs) + 1e-12)
+            beta = 100 * abs(sqrt(abs(rs)) - sqrt(abs(vs))) / (sqrt(abs(vs)) > 1e-12 ? sqrt(abs(vs)) : sqrt(abs(rs - vs)) + 1e-12)
             mpe = min(beta, psi)
 
             push!(mre_terms, mre)
@@ -225,6 +221,7 @@ function calculate_error_metrics(frontier, reference)
 
     return mean(mre_terms), mean(vre_terms), mean(mpe_terms)
 end
+
 
 ############################
 # Error Ratio (ER)
@@ -253,6 +250,10 @@ function error_ratio(frontier, reference; tol=1e-8)
 
     return erros / n
 end
+
+############################
+# Hypervolume (HV)
+############################
 
 """
     hypervolume(frontier, ref; sense)

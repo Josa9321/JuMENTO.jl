@@ -16,7 +16,9 @@ function save_results_to_file(frontier, solve_report, save_dir::String)
     open(pareto_path, "w") do file
         println(file, "Pareto Front Solutions:")
         for solution in frontier
-            obj = solution.variables[:objs]
+            obj = hasproperty(solution, :objectives) ? solution.objectives :
+                  (haskey(solution.variables, :objs) ? solution.variables[:objs] : "N/A")
+
             println(file, "Objectives: ", obj)
 
             vars = Dict(k => v for (k, v) in solution.variables if k != :s && k != :objs)
@@ -62,20 +64,37 @@ end
 """
     Function that plots the variables space and returns the plot object
 """
-function variables_plot(frontier, model::Model)
-    variables = save_variables!(model)
-    size = length(variables)
-
-    if size != 2
+function variables_plot(data, model=nothing)
+    if isempty(data)
+        println("No data.")
         return nothing
     end
 
-    x_variable = [s.variables[:x][1] for s in frontier]
-    y_variable = [s.variables[:x][2] for s in frontier]
+    var_names = Symbol[]
+    if model !== nothing
+        dvars = decision_vars(model)
+        var_names = Symbol.(JuMP.name.(dvars)) 
+    else
+        var_names = collect(keys(data[1].variables))
+    end
 
-    p = scatter(x_variable, y_variable, label="Solutions", marker=:star, color=:blue, markersize=8)
-    xlabel!("First Variable")
-    ylabel!("Second Variable")
+    if length(var_names) >= 2 && all(haskey(data[1].variables, vn) for vn in var_names[1:2])
+        x_vals = [sol.variables[var_names[1]] for sol in data]
+        y_vals = [sol.variables[var_names[2]] for sol in data]
+        xlabel!(string(var_names[1]))
+        ylabel!(string(var_names[2]))
+
+    elseif haskey(data[1].variables, :x) && length(data[1].variables[:x]) >= 2
+        x_vals = [sol.variables[:x][1] for sol in data]
+        y_vals = [sol.variables[:x][2] for sol in data]
+        xlabel!("x[1]"); ylabel!("x[2]")
+
+    else
+        println("Variables space cannot be plotted. Found keys = $(keys(data[1].variables))")
+        return nothing
+    end
+
+    p = scatter(x_vals, y_vals, label="Solutions", marker=:star, color=:blue, markersize=8)
     title!("Variable Space")
     return p
 end

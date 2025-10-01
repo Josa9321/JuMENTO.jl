@@ -5,6 +5,18 @@ function test_simple_problems(model_function, saved_frontier, saved_table; is_au
     return nothing
 end
 
+function test_simple_problems_nsga2_2objectives(model_function)
+    model = model_function()
+    frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:quadratic,default_range=100.0)
+    return nothing
+end
+
+function test_simple_problems_nsga2_3objectives(model_function)
+    model = model_function()
+    frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:linear,default_range=100000.0)
+    return nothing
+end
+
 ########################
 #####
 ########################
