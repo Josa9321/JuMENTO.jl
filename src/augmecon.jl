@@ -118,21 +118,6 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, options)
     return frontier, solve_report
 end
 
-function println_if_necessary(message, options)
-    if options[:print_level]::Int64 > 0
-        println(message)
-    end
-    return
-end
-
-function printf_if_necessary(options, message_format, variables...)
-    if options[:print_level]::Int64 > 0
-        message_to_print = Printf.format(Printf.Format(message_format), variables...)
-        println(message_to_print)
-    end
-    return 
-end
-
 function set_objective_sense_set!(options, model, objectives, user_options)
     if !(:objective_sense_set in keys(user_options))
         options[:objective_sense_set] = objective_sense(model) == MAX_SENSE ? ["Max" for _ in eachindex(objectives)] : ["Min" for _ in eachindex(objectives)]

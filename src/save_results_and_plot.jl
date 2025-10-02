@@ -99,6 +99,29 @@ function variables_plot(data, model=nothing)
     return p
 end
 
+
+"""
+    Function that plots the variables space and returns the plot object
+"""
+function variables_plot(frontier, model::Model)
+    variables = save_variables!(model)
+    size = length(variables) - 1
+    if size != 2
+        @warn "Invalid number of variables for plotting\n."
+        return nothing
+    end
+
+    x_variable = [s.variables[:x][1] for s in frontier]
+    y_variable = [s.variables[:x][2] for s in frontier]
+
+    p = scatter(x_variable, y_variable, label="Solutions", marker=:star, color=:blue, markersize=8)
+    xlabel!("First Variable")
+    ylabel!("Second Variable")
+    title!("Variable Space")
+    return p
+end
+
+
 function plot_both(frontier, model::Model)
     p1 = plot(pareto_plot(frontier))
 
