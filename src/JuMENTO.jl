@@ -15,7 +15,6 @@ include("dominance_relations.jl")
 include("options.jl")
 include("augmecon.jl")
 include("metrics.jl")
-include("test_metrics.jl")
 include("save_results_and_plot.jl")
 
 include("nsga2_options.jl")
