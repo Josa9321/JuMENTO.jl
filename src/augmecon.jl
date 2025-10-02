@@ -1,7 +1,5 @@
 """
     augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
-or
-    augmecon(model::Model, objectives::Vector{VariableRef}, user_options)
 
 Augmecon is a function that solves a multiobjective optimization problem using the augmented ε-constraint method with a specified solver.
 
@@ -14,9 +12,10 @@ Augmecon is a function that solves a multiobjective optimization problem using t
 - `grid_points` (required): The number of grid points used in the table solver.
 - `objective_sense_set`: A vector that indicates the sense (e.g., minimizing or maximizing) of the optimization problem for each objective. The default value is `["Max", "Max", ...]`.
 - `penalty`: A numeric value that indicates the penalty used in the augmented ε-constraint method. The default value is `1e-3`.
-- `bypass`: A boolean value that indicates whether the bypass method should be used. The default value is `true`.
+- `bypass`: A boolean value that indicates whether the bypass method should be used (AUGMECON2). The default value is `true`.
 - `nadir`: A vector that indicates the nadir point of the optimization problem. 
-- `dominance_eps`: A value that indicates the epsilon used in the dominance relations. The default value is `1e-8`.
+- `dominance_eps`: The tolerance used when determining dominance relations. Default is `1e-8`.
+- `print_level`: An integer value that indicates the level of printing during the execution of the AUGMECON method. The default value is `0` (no printing).
 
 # Returns
 - `pareto_set::Vector{SolutionJuMP}`: A vector containing the solutions of the optimization problem.
@@ -44,7 +43,16 @@ end
 # Solve the model using AUGMECON method
 frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense_set = ["Min", "Min"])
 ```
+"""
+function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
+    options = augmecon_options(user_options, length(objectives)) 
+    return augmecon(model::Model, objectives::Vector{VariableRef}, options)
+end
 
+"""
+    augmecon(model::Model; user_options...)
+
+Run augmecon on a JuMP model with multiple objectives defined in the model.
 """
 function augmecon(model::Model; user_options...)
     objectives = objective_function(model)
@@ -61,10 +69,7 @@ function augmecon(model::Model; user_options...)
     reset_model_objectives!(model, objectives, sense)
     return results
 end
-function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
-    options = augmecon_options(user_options, length(objectives)) 
-    return augmecon(model::Model, objectives::Vector{VariableRef}, options)
-end
+
 function augmecon(model::Model, objectives::Vector{VariableRef}, options)
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(model), objectives)) "At least one objective isn't defined in the model as a constraint"
