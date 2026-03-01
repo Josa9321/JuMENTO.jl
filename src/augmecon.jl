@@ -46,7 +46,7 @@ frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense
 """
 function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
     options = augmecon_options(user_options, length(objectives)) 
-    return augmecon(model::Model, objectives::Vector{VariableRef}, options)
+    return _run_augmecon(model::Model, objectives::Vector{VariableRef}, options)
 end
 
 """
@@ -62,15 +62,15 @@ function augmecon(model::Model; user_options...)
     @constraint(model, __c_my_objective_variables[i in eachindex(objectives)], __my_objective_variables[i] == objectives[i])
     sense = objective_sense(model)
 
-    set_objective_sense_set!(options, model, objectives, user_options)
+    __set_objective_sense_set!(options, model, objectives, user_options)
 
-    results = augmecon(model::Model, __my_objective_variables, options)
+    results = _run_augmecon(model::Model, __my_objective_variables, options)
 
-    reset_model_objectives!(model, objectives, sense)
+    __reset_model_objectives!(model, objectives, sense)
     return results
 end
 
-function augmecon(model::Model, objectives::Vector{VariableRef}, options)
+function _run_augmecon(model::Model, objectives::Vector{VariableRef}, options)
     @assert length(objectives) >= 2 "The model has only 1 objective"
     @assert all(JuMP.is_valid.(Ref(model), objectives)) "At least one objective isn't defined in the model as a constraint"
     
@@ -78,17 +78,17 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, options)
     println_if_necessary("AUGMECON$(options[:bypass]::Bool ? "-2" : "") model initialized.", options)
     print_options(options)
 
-    start_augmecon_time = tic()
+    start_augmecon_time = __tic()
     augmecon_model = AugmeconJuMP(model, objectives, options)
     augmecon_model.report.counter["start_time_global"] = start_augmecon_time
     augmecon_model.report.counter["grid_counter"] = 0
 
     # From now, solutions will be generated
-    objectives_rhs = get_objectives_rhs(augmecon_model, options)
-    set_model_for_augmecon!(augmecon_model, objectives_rhs, options)
+    objectives_rhs = __get_objectives_rhs(augmecon_model, options)
+    __set_model_for_augmecon!(augmecon_model, objectives_rhs, options)
     
     solve_report = augmecon_model.report
-    start_recursion_time = tic()
+    start_recursion_time = __tic()
     frontier = SolutionJuMP[]
     println_if_necessary("", options)
     println_if_necessary("-"^76, options)
@@ -99,33 +99,33 @@ function augmecon(model::Model, objectives::Vector{VariableRef}, options)
 
         if options[:bypass]
             s_2 = augmecon_model.model[:s][2]
-            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options, s_2 = s_2)
+            __recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options, s_2 = s_2)
         else
-            recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options)
+            __recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_augmecon_time, options)
         end
     end
     println_if_necessary("-"^76, options)
 
-    solve_report.counter["recursion_total_time"] = toc(start_recursion_time)
-    solve_report.counter["total_time"] = toc(start_augmecon_time)
+    solve_report.counter["recursion_total_time"] = __toc(start_recursion_time)
+    solve_report.counter["total_time"] = __toc(start_augmecon_time)
     
     println_if_necessary("Total execution time: $(solve_report.counter["total_time"]) seconds", options)
     println_if_necessary("Execution completed\n", options)
 
-    convert_table_to_correct_sense!(augmecon_model)
+    __convert_table_to_correct_sense!(augmecon_model)
     frontier = generate_pareto(frontier, options[:dominance_eps])
-    reset_augmecon_model!(model)
+    __reset_augmecon_model!(model)
     return frontier, solve_report
 end
 
-function set_objective_sense_set!(options, model, objectives, user_options)
+function __set_objective_sense_set!(options, model, objectives, user_options)
     if !(:objective_sense_set in keys(user_options))
         options[:objective_sense_set] = objective_sense(model) == MAX_SENSE ? ["Max" for _ in eachindex(objectives)] : ["Min" for _ in eachindex(objectives)]
     end
     return nothing
 end
 
-function reset_model_objectives!(model, objectives, sense)
+function __reset_model_objectives!(model, objectives, sense)
     delete(model, model[:__c_my_objective_variables])
     unregister(model, :__c_my_objective_variables)
     
@@ -136,7 +136,7 @@ function reset_model_objectives!(model, objectives, sense)
     return nothing
 end
 
-function reset_augmecon_model!(model)
+function __reset_augmecon_model!(model)
     delete(model, model[:objectives_maximize])
     unregister(model, :objectives_maximize)
 
@@ -173,13 +173,13 @@ This function computes and returns the range of each objective in the optimizati
 # Notes
 - If the nadir point is not specified, then the payoff table is used to define a possible nadir point.
 """
-function get_objectives_rhs(augmecon_model, options)
+function __get_objectives_rhs(augmecon_model, options)
     if :nadir in keys(options)
-        ideal_point = get_ideal_point(augmecon_model, options)
-        return set_objectives_rhs_range(ideal_point, options)
+        ideal_point = _get_ideal_point(augmecon_model, options)
+        return __set_objectives_rhs_range(ideal_point, options)
     end
-    payoff_table!(augmecon_model) 
-    return set_objectives_rhs_range(augmecon_model)
+    __payoff_table!(augmecon_model) 
+    return __set_objectives_rhs_range(augmecon_model)
 end
 
 """
@@ -187,10 +187,10 @@ end
 
 This function computes and returns the ideal point of the optimization problem. It is intended for use when a user specifies a nadir point in the options.
 """
-function get_ideal_point(augmecon_model, options)
+function _get_ideal_point(augmecon_model, options)
     objectives = augmecon_model.objectives_maximize
 
-    start_time = tic()
+    start_time = __tic()
     println_if_necessary("Calculating ideal point", options)
     ideal_point = zeros(length(objectives))
     println_if_necessary("Checking if model has viable idel and nadir points.", options)
@@ -199,15 +199,15 @@ function get_ideal_point(augmecon_model, options)
             continue
         end
         obj = objectives[i]
-        has_ideal_nadir = optimize_and_fix!(augmecon_model, obj)
-        set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
+        has_ideal_nadir = __optimize_and_fix!(augmecon_model, obj)
+        __set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
         if has_viable_ideal_nadir(augmecon_model)
             ideal_point[i] = lower_bound(obj)
             delete_lower_bound(obj)
         end
     end
     solve_report = augmecon_model.report
-    solve_report.counter["tables_generation_total_time"] = toc(start_time)
+    solve_report.counter["tables_generation_total_time"] = __toc(start_time)
     println_if_necessary("Calculated ideal point: $ideal_point", options)
     @objective(augmecon_model.model, Max, 0.0)
     return ideal_point
@@ -218,10 +218,10 @@ end
 
 This function computes and returns the range of each objective in the optimization problem, considering a specified nadir point.
 """
-function set_objectives_rhs_range(ideal_point, options)
+function __set_objectives_rhs_range(ideal_point, options)
     nadir = options[:nadir]
 
-    verify_nadir(ideal_point, nadir)
+    __verify_nadir(ideal_point, nadir)
     return [
         range(nadir[o], ideal_point[o], length = ((ideal_point[o] - nadir[o]) != 0.0 ? options[:grid_points] : 1)) 
             for o in eachindex(ideal_point)
@@ -233,7 +233,7 @@ end
 
 This function verifies whether the nadir point is better than the ideal point in at least one objective.
 """
-function verify_nadir(ideal_point, nadir)
+function __verify_nadir(ideal_point, nadir)
     for (o, value) in enumerate(ideal_point)
         @assert nadir[o] <= value "nadir is better than ideal point in at least $o"
     end
@@ -249,7 +249,7 @@ end
 
 This function verifies whether the objective sense set is valid.
 """
-function verify_objectives_sense_set(objective_sense_set, objectives)
+function _verify_objectives_sense_set(objective_sense_set, objectives)
     for sense in objective_sense_set
         @assert (sense == "Max" || sense == "Min") """Objective sense should be "Max" or "Min" """
     end
@@ -265,29 +265,29 @@ end
 
 This function computes and returns the payoff table of the optimization problem.
 """
-function payoff_table!(augmecon_model::AugmeconJuMP)
+function __payoff_table!(augmecon_model::AugmeconJuMP)
     objectives = augmecon_model.objectives_maximize
-    start_time = tic()
+    start_time = __tic()
     solve_report = augmecon_model.report
     table = solve_report.table
     for (i, obj_higher) in enumerate(objectives)
         if !has_viable_ideal_nadir(augmecon_model)
             continue
         end
-        has_ideal_nadir = optimize_and_fix!(augmecon_model, obj_higher)
-        set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
+        has_ideal_nadir = __optimize_and_fix!(augmecon_model, obj_higher)
+        __set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
         for (o, obj_minor) in enumerate(objectives)
             if i != o && has_viable_ideal_nadir(augmecon_model)
-                has_ideal_nadir = optimize_and_fix!(augmecon_model, obj_minor)
-                set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
+                has_ideal_nadir = __optimize_and_fix!(augmecon_model, obj_minor)
+                __set_if_has_viable_ideal_nadir!(augmecon_model, has_ideal_nadir)
             end
         end
         if has_viable_ideal_nadir(augmecon_model)
-            save_on_table!(table, i, augmecon_model)
+            __save_on_table!(table, i, augmecon_model)
             delete_lower_bound.(objectives)
         end
     end
-    solve_report.counter["tables_generation_total_time"] = toc(start_time)
+    solve_report.counter["tables_generation_total_time"] = __toc(start_time)
     @objective(augmecon_model.model, Max, 0.0)
     return table
 end
@@ -297,7 +297,7 @@ end
 
 This function computes and returns the range of each objective in the optimization problem, considering the payoff table.
 """
-function set_objectives_rhs_range(augmecon_model::AugmeconJuMP)
+function __set_objectives_rhs_range(augmecon_model::AugmeconJuMP)
     solve_report = augmecon_model.report
     table = solve_report.table
     O = Base.OneTo(num_objectives(augmecon_model))
@@ -311,7 +311,7 @@ end
 
 This function stores the lower bound for each objective of the found solution in the payoff table.
 """
-function save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
+function __save_on_table!(table, i::Int64, augmecon_model::AugmeconJuMP)
     for o in Base.OneTo(num_objectives(augmecon_model))
         table[i, o] = lower_bound(augmecon_model.objectives_maximize[o])
     end
@@ -323,7 +323,7 @@ end
 
 This function optimizes the model and fixes the lower bound of the given objective.
 """
-function optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
+function __optimize_and_fix!(augmecon_model::AugmeconJuMP, objective)
     model = augmecon_model.model
     @objective(model, Max, objective)
     optimize!(model)
@@ -346,18 +346,18 @@ end
 
 This function sets the model for the AUGMECON method.
 """
-function set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, options)
+function __set_model_for_augmecon!(augmecon_model::AugmeconJuMP, objectives_rhs, options)
     O = 2:num_objectives(augmecon_model)
     @variable(augmecon_model.model, 
         s[O] >= 0.0)
         
     if options[:bypass]
         @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            options[:penalty]*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10.0^float(2-o)) * s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
+            options[:penalty]*sum((__objectives_rhs_range(objectives_rhs, o) > 0.0 ? (10.0^float(2-o)) * s[o]/__objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
             
     else
         @objective(augmecon_model.model, Max, augmecon_model.objectives_maximize[1] + 
-            options[:penalty]*sum((objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
+            options[:penalty]*sum((__objectives_rhs_range(objectives_rhs, o) > 0.0 ? s[o]/__objectives_rhs_range(objectives_rhs, o) : 0.0) for o in O))
     end
     @constraint(augmecon_model.model, other_objectives[o in O], 
         augmecon_model.objectives_maximize[o] - s[o] == 0.0)
@@ -369,7 +369,7 @@ end
 
 This function computes and returns the range of the given objective.
 """
-function objectives_rhs_range(objectives_rhs, o)
+function __objectives_rhs_range(objectives_rhs, o)
     return objectives_rhs[o][end] - objectives_rhs[o][1]
 end
 
@@ -382,19 +382,19 @@ end
 
 This function recursively solves the model using the AUGMECON method with the bypass method.
 """
-function recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time, options; o = num_objectives(augmecon_model), s_2)
+function __recursive_augmecon2!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time, options; o = num_objectives(augmecon_model), s_2)
     i_k = 0
     while i_k < length(objectives_rhs[o]) # augmecon_model.grid_points
         i_k += 1
         set_normalized_rhs(augmecon_model.model[:other_objectives][o], objectives_rhs[o][i_k])
         if o > 2
-            recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_time, options, o = o - 1, s_2 = s_2)
+            __recursive_augmecon2!(augmecon_model, frontier, objectives_rhs, start_time, options, o = o - 1, s_2 = s_2)
         else
             augmecon_model.report.counter["grid_counter"] += 1
-            optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
+            __optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
             if JuMP.has_values(augmecon_model.model)
                 push!(frontier, SolutionJuMP(augmecon_model))
-                b = get_number_of_redundant_iterations(s_2, objectives_rhs[o])
+                b = __get_number_of_redundant_iterations(s_2, objectives_rhs[o])
                 i_k += b
             else
                 i_k = augmecon_model.grid_points
@@ -409,15 +409,15 @@ end
 
 This function recursively solves the model using the AUGMECON method.
 """
-function recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time, options; o = 2)
+function __recursive_augmecon!(augmecon_model::AugmeconJuMP, frontier, objectives_rhs, start_time, options; o = 2)
 
     for eps in objectives_rhs[o]
         set_normalized_rhs(augmecon_model.model[:other_objectives][o], eps)
         if o < num_objectives(augmecon_model)
-            recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_time, options, o = o + 1)
+            __recursive_augmecon!(augmecon_model, frontier, objectives_rhs, start_time, options, o = o + 1)
         else
             augmecon_model.report.counter["grid_counter"] += 1
-            optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
+            __optimize_mo_method_model!(augmecon_model, frontier, start_time, options)
             if JuMP.has_values(augmecon_model.model)
                 push!(frontier, SolutionJuMP(augmecon_model))
             else
@@ -431,7 +431,7 @@ end
 ###############################
 ###############################
 
-function convert_table_to_correct_sense!(augmecon_model::AugmeconJuMP)
+function __convert_table_to_correct_sense!(augmecon_model::AugmeconJuMP)
     table = augmecon_model.report.table
     sense = augmecon_model.sense_value
     for i in axes(table, 1)
@@ -442,7 +442,7 @@ function convert_table_to_correct_sense!(augmecon_model::AugmeconJuMP)
     return table
 end
 
-function optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vector{SolutionJuMP}, start_time::Float64, options)
+function __optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vector{SolutionJuMP}, start_time::Float64, options)
     optimize!(augmecon_model.model)
 
     augmecon_model.report.counter["solve_time"] += solve_time(augmecon_model.model)
@@ -452,12 +452,12 @@ function optimize_mo_method_model!(augmecon_model::AugmeconJuMP, frontier::Vecto
         push!(frontier, SolutionJuMP(augmecon_model))
     end
 
-    printf_optimize_mo_if_necessary(augmecon_model, frontier, start_time, options)
+    __printf_optimize_mo_if_necessary(augmecon_model, frontier, start_time, options)
 
     return augmecon_model
 end
 
-function printf_optimize_mo_if_necessary(augmecon_model, frontier, start_time, options)
+function __printf_optimize_mo_if_necessary(augmecon_model, frontier, start_time, options)
     if options[:print_level]::Int64 > 0
         time_elapsed = round(time() - start_time, digits=4)
         num_sol = length(frontier)        
@@ -473,20 +473,20 @@ function printf_optimize_mo_if_necessary(augmecon_model, frontier, start_time, o
     return nothing
 end
 
-function get_number_of_redundant_iterations(s_2, objective_range)
+function __get_number_of_redundant_iterations(s_2, objective_range)
     division = value(s_2)/objective_range.step.hi
-    return since_solver_could_let_s_2_less_than_zero(division)
+    return __since_solver_could_let_s_2_less_than_zero(division)
 end
 
-function since_solver_could_let_s_2_less_than_zero(b)
+function __since_solver_could_let_s_2_less_than_zero(b)
     result = trunc(Int64, b)
     return result
 end
 
-function set_if_has_viable_ideal_nadir!(augmecon_model::AugmeconJuMP, has_found)
+function __set_if_has_viable_ideal_nadir!(augmecon_model::AugmeconJuMP, has_found)
     augmecon_model.report.has_nadir_ideal = has_found
     return nothing
 end
 
-tic() = time()
-toc(start_time) = time() - start_time 
+__tic() = time()
+__toc(start_time) = time() - start_time 

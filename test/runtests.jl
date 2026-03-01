@@ -1,13 +1,13 @@
 using JuMENTO, Test
 
-include("./metric_tests.jl")
+include("metric_tests.jl")
 include("simple_models.jl")
 include("test_simple_models.jl")
 include("mokp//mokp.jl")
 
 @testset "JuMENTO.jl" begin
     @testset "Test Metrics" begin
-        test_all_metrics()
+        test_multiobjective_metrics()
     end
 
     mokp_instances_addresses_set = readdir("./mokp/instances/", join=true)[1:2]

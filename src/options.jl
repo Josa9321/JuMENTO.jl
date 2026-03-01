@@ -1,12 +1,17 @@
+"""
+    augmecon_options(user_options, num_objectives)
+
+Sets and validate AUGMECON configuration options.
+"""
 function augmecon_options(user_options, num_objectives)
-    options = set_options_dict(user_options, num_objectives)
-    verify_user_keys(options)
-    add_default_options_if_needed!(options)
-    verify_options(options)
+    options = __set_options_dict(user_options, num_objectives)
+    __verify_user_keys(options)
+    __add_default_options_if_needed!(options)
+    __verify_options(options)
     return options
 end
 
-function verify_user_keys(user_options)
+function __verify_user_keys(user_options)
     user_keys = keys(user_options)
     @assert :grid_points in user_keys "grid_points option is missing"
     
@@ -29,7 +34,7 @@ end
 ###########################
 ###########################
 
-function set_options_dict(user_options, num_objectives)
+function __set_options_dict(user_options, num_objectives)
     options = Dict{Symbol, Any}()
     options[:num_objectives] = num_objectives
     for (k, value) in pairs(user_options)
@@ -38,17 +43,17 @@ function set_options_dict(user_options, num_objectives)
     return options
 end
 
-function add_default_options_if_needed!(options)
-    add_default!(options, :objective_sense_set, ["Max" for i in Base.OneTo(options[:num_objectives])])
-    add_default!(options, :penalty, 1e-3)
-    add_default!(options, :bypass, true)
-    add_default!(options, :dominance_eps, 1e-8)
-    add_default!(options, :print_level, 0)
+function __add_default_options_if_needed!(options)
+    __add_default!(options, :objective_sense_set, ["Max" for i in Base.OneTo(options[:num_objectives])])
+    __add_default!(options, :penalty, 1e-3)
+    __add_default!(options, :bypass, true)
+    __add_default!(options, :dominance_eps, 1e-8)
+    __add_default!(options, :print_level, 0)
     return options
 end
 
 
-function add_default!(options_set, key, value)
+function __add_default!(options_set, key, value)
     if !(key in keys(options_set)) 
         options_set[key] = value
     end
@@ -57,13 +62,13 @@ end
 ###########################
 ###########################
 
-function verify_options(options)
+function __verify_options(options)
     verify_bypass(options)
     verify_print_level(options)
     verify_grid_points(options) 
     verify_penalty(options) 
-    verify_objectives_sense_set(options)
-    verify_nadir(options)
+    _verify_objectives_sense_set(options)
+    __verify_nadir(options)
 end
 
 verify_bypass(options) = @assert typeof(options[:bypass]) == Bool "bypass option should be a Bool type"
@@ -89,7 +94,7 @@ function verify_penalty(options)
     return nothing
 end
 
-function verify_objectives_sense_set(options)
+function _verify_objectives_sense_set(options)
     objective_sense_set = options[:objective_sense_set]
     @assert typeof(objective_sense_set) == Vector{String} "The sense set isn't a Float Vector"
     for sense in objective_sense_set
@@ -99,7 +104,7 @@ function verify_objectives_sense_set(options)
     return true
 end
 
-function verify_nadir(options)
+function __verify_nadir(options)
     if :nadir in keys(options)
         pushfirst!(options[:nadir], 0.0)
         nadir = options[:nadir]

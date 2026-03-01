@@ -1,4 +1,105 @@
 """
+    nsga2(model::Model; kwargs...)
+
+Runs the NSGA-II evolutionary algorithm on the given optimization model.
+
+# Arguments
+- `model::Model`: JuMP optimization model.
+
+# Keyword Arguments
+- Various user options (e.g., population size, generations, penalty type, etc.).
+
+# Returns
+- `(pareto_front::Vector{SolutionNSGA}, report)`: Final Pareto front and performance report.
+"""
+function nsga2(model::Model; kwargs...)
+    user_options = Dict(kwargs) 
+    options = nsga2_options(user_options, model)
+
+    pop_size       = options[:pop_size]
+    generations    = options[:generations]
+    crossover_rate = options[:crossover_rate]
+    mutation_rate  = options[:mutation_rate]
+    penalty        = options[:penalty]
+    rho            = options[:rho]
+
+    dvars = decision_vars(model)
+    obj_exprs = model_objectives(model)
+    obj_coefs, obj_consts = compile_affine_objectives(obj_exprs, dvars)
+    cons_coefs, cons_rhs, cons_sense = extract_linear_constraints(model, dvars)
+
+    population = initialize_population(dvars, options[:num_objectives], pop_size; default_range=options[:default_range])
+
+    # ===== Initial log =====
+    start_time = time()
+    println_if_necessary("Initializing NSGA-II with $(options[:num_objectives]) objectives.", options)
+    println_if_necessary("Population size: $pop_size", options)
+    println_if_necessary("Generations: $generations", options)
+    println_if_necessary("Penalty type: $penalty", options)
+    println_if_necessary("Objective sense: $(options[:objective_sense_set])", options)
+
+    println_if_necessary("-"^76, options)
+    printf_if_necessary(options, "%-12s | %15s | %23s", "Generation", "Time (s)", "Best fitness[1]")
+    println_if_necessary("-"^76, options)
+
+    # Initial evaluation
+    evaluate_population_with_penalty!(population, dvars, obj_coefs, obj_consts,
+                                      cons_coefs, cons_rhs, cons_sense;
+                                      penalty_type=penalty, ρ=rho, generation=0, maxgen=generations,
+                                      sense_vec=options[:objective_sense_set])
+
+    # Evolutionary loop
+    for gen in 1:generations
+        fronts = fast_non_dominated_sort(population, options[:objective_sense_set])
+        for front in fronts
+            calculate_crowding_distance!(front)
+        end
+        mating_pool = selection(population, pop_size, options[:objective_sense_set])
+        offspring = variation(mating_pool, crossover_rate, mutation_rate)
+
+        for ind in offspring
+            for (j,var) in enumerate(dvars)
+                nm = Symbol(name(var))
+                val = ind.variables[nm]
+                lb = has_lower_bound(var) ? lower_bound(var) : -Inf
+                ub = has_upper_bound(var) ? upper_bound(var) : Inf
+                ind.variables[nm] = clamp(val, lb, ub)
+            end
+        end
+
+        evaluate_population_with_penalty!(offspring, dvars, obj_coefs, obj_consts,
+                                          cons_coefs, cons_rhs, cons_sense;
+                                          penalty_type=penalty, ρ=rho, generation=gen, maxgen=generations,
+                                          sense_vec=options[:objective_sense_set])
+
+        population = environmental_selection(vcat(population, offspring), pop_size, options[:objective_sense_set])
+
+        # ===== Log per generation =====
+        elapsed = round(time() - start_time, digits=4)
+        best_fit = minimum([ind.fitness[1] for ind in population])
+        printf_if_necessary(options, "%-12d | %15.4f | %23.4f", gen, elapsed, best_fit)
+    end
+
+    total_time = time() - start_time
+    println_if_necessary("Total execution time: $total_time seconds", options)
+    println_if_necessary("-"^76, options)
+    println_if_necessary("Execution completed\n", options)
+
+    fronts = fast_non_dominated_sort(population, options[:objective_sense_set])
+    pareto_front = fronts[1]
+
+    # Generate final report
+    report = nsga2_report(pareto_front, total_time, options)
+
+    return pareto_front, report
+end
+
+
+###############################
+###############################
+###############################
+
+"""
     compute_penalty(v::Vector{Float64}; penalty_type::Symbol=:quadratic, ρ::Float64=1.0, generation::Int=0, maxgen::Int=1)
 
 Computes a penalty value based on the constraint violations `v`.
@@ -446,98 +547,3 @@ function environmental_selection(combined::Vector{SolutionNSGA}, pop_size::Int, 
     return new_pop
 end
 
-"""
-    nsga2(model::Model; kwargs...)
-
-Runs the NSGA-II evolutionary algorithm on the given optimization model.
-
-# Arguments
-- `model::Model`: JuMP optimization model.
-
-# Keyword Arguments
-- Various user options (e.g., population size, generations, penalty type, etc.).
-
-# Returns
-- `(pareto_front::Vector{SolutionNSGA}, report)`: Final Pareto front and performance report.
-"""
-function nsga2(model::Model; kwargs...)
-    user_options = Dict(kwargs) 
-    options = nsga2_options(user_options, model)
-
-    pop_size       = options[:pop_size]
-    generations    = options[:generations]
-    crossover_rate = options[:crossover_rate]
-    mutation_rate  = options[:mutation_rate]
-    penalty        = options[:penalty]
-    rho            = options[:rho]
-
-    dvars = decision_vars(model)
-    obj_exprs = model_objectives(model)
-    obj_coefs, obj_consts = compile_affine_objectives(obj_exprs, dvars)
-    cons_coefs, cons_rhs, cons_sense = extract_linear_constraints(model, dvars)
-
-    population = initialize_population(dvars, options[:num_objectives], pop_size; default_range=options[:default_range])
-
-    # ===== Initial log =====
-    start_time = time()
-    println_if_necessary("Initializing NSGA-II with $(options[:num_objectives]) objectives.", options)
-    println_if_necessary("Population size: $pop_size", options)
-    println_if_necessary("Generations: $generations", options)
-    println_if_necessary("Penalty type: $penalty", options)
-    println_if_necessary("Objective sense: $(options[:objective_sense_set])", options)
-
-    println_if_necessary("-"^76, options)
-    printf_if_necessary(options, "%-12s | %15s | %23s", "Generation", "Time (s)", "Best fitness[1]")
-    println_if_necessary("-"^76, options)
-
-    # Initial evaluation
-    evaluate_population_with_penalty!(population, dvars, obj_coefs, obj_consts,
-                                      cons_coefs, cons_rhs, cons_sense;
-                                      penalty_type=penalty, ρ=rho, generation=0, maxgen=generations,
-                                      sense_vec=options[:objective_sense_set])
-
-    # Evolutionary loop
-    for gen in 1:generations
-        fronts = fast_non_dominated_sort(population, options[:objective_sense_set])
-        for front in fronts
-            calculate_crowding_distance!(front)
-        end
-        mating_pool = selection(population, pop_size, options[:objective_sense_set])
-        offspring = variation(mating_pool, crossover_rate, mutation_rate)
-
-        for ind in offspring
-            for (j,var) in enumerate(dvars)
-                nm = Symbol(name(var))
-                val = ind.variables[nm]
-                lb = has_lower_bound(var) ? lower_bound(var) : -Inf
-                ub = has_upper_bound(var) ? upper_bound(var) : Inf
-                ind.variables[nm] = clamp(val, lb, ub)
-            end
-        end
-
-        evaluate_population_with_penalty!(offspring, dvars, obj_coefs, obj_consts,
-                                          cons_coefs, cons_rhs, cons_sense;
-                                          penalty_type=penalty, ρ=rho, generation=gen, maxgen=generations,
-                                          sense_vec=options[:objective_sense_set])
-
-        population = environmental_selection(vcat(population, offspring), pop_size, options[:objective_sense_set])
-
-        # ===== Log per generation =====
-        elapsed = round(time() - start_time, digits=4)
-        best_fit = minimum([ind.fitness[1] for ind in population])
-        printf_if_necessary(options, "%-12d | %15.4f | %23.4f", gen, elapsed, best_fit)
-    end
-
-    total_time = time() - start_time
-    println_if_necessary("Total execution time: $total_time seconds", options)
-    println_if_necessary("-"^76, options)
-    println_if_necessary("Execution completed\n", options)
-
-    fronts = fast_non_dominated_sort(population, options[:objective_sense_set])
-    pareto_front = fronts[1]
-
-    # Generate final report
-    report = nsga2_report(pareto_front, total_time, options)
-
-    return pareto_front, report
-end

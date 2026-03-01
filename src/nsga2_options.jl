@@ -245,14 +245,14 @@ function nsga2_options(user_options::Dict, model::Model)
     end
 
     # Defaults
-    add_default!(options, :pop_size, 50)
-    add_default!(options, :generations, 100)
-    add_default!(options, :crossover_rate, 0.9)
-    add_default!(options, :mutation_rate, 0.1)
-    add_default!(options, :penalty, :linear)
-    add_default!(options, :rho, 1.0)
-    add_default!(options, :print_level, 0)
-    add_default!(options, :default_range, 10.0)
+    __add_default!(options, :pop_size, 50)
+    __add_default!(options, :generations, 100)
+    __add_default!(options, :crossover_rate, 0.9)
+    __add_default!(options, :mutation_rate, 0.1)
+    __add_default!(options, :penalty, :linear)
+    __add_default!(options, :rho, 1.0)
+    __add_default!(options, :print_level, 0)
+    __add_default!(options, :default_range, 10.0)
 
     verify_nsga2_options(options)
 

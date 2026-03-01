@@ -4,4 +4,3 @@ temp*
 *.ipynb
 .*
 bupms
-run.jl

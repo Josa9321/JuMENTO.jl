@@ -104,7 +104,7 @@ end
     Function that plots the variables space and returns the plot object
 """
 function variables_plot(frontier, model::Model)
-    variables = save_variables!(model)
+    variables = __save_variables!(model)
     size = length(variables) - 1
     if size != 2
         @warn "Invalid number of variables for plotting\n."
