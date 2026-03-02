@@ -11,24 +11,25 @@ using Random
 
 include("structs.jl")
 include("dominance_relations.jl")
+include("options.jl")
 
 # Colocar em um módulo os métodos da família AUGMECON
 # Colocar em um módulo as heurísticas
 # Reaproveitar funções declaradas para o AUGMECON para serem usadas nas heurísticas
 # Colocar em um módulos os plots e as métricas
 
-include("options.jl")
 
 
 include("augmecon.jl")
-include("Metrics.jl")
-include("save_results_and_plot.jl")
 
 include("nsga2_options.jl")
 include("nsga2.jl")
 
+include("Metrics.jl")
+include("Plots/Plots.jl")
+
 include("utils.jl")
 
-export augmecon, nsga2, Metrics, SolutionJuMP, ReportAUG, save_results_to_file, plot_result
+export augmecon, nsga2, Metrics, SolutionJuMP, ReportAUG
 
 end

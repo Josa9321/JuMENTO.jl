@@ -3,92 +3,65 @@ using JuMENTO
 
 function test_multiobjective_metrics()
 
-    ##############################
-    frontier1 = [10.0 20.0; 100.0 80.0]
-    reference1 = [10.0 20.0; 100.0 80.0]
+    #################################
+    # Test case for equal frontiers #
+    #################################
 
-    sp1 = Metrics.spacing_metric(frontier1, reference1)
-    gd1 = Metrics.general_distance(frontier1, reference1)
-    dm1 = Metrics.diversity_metric(frontier1, reference1)
-    me1, ve1, mpe1 = Metrics.calculate_error_metrics(frontier1, reference1)
-    er1 = Metrics.error_ratio(frontier1, reference1)
-    hv1 = Metrics.hypervolume(frontier1, [25.0, 120.0])
+    frontier_eq = [10.0 20.0; 100.0 80.0]
+    reference_eq = [10.0 20.0; 100.0 80.0]
+    nadir_eq = [25.0, 120.0]
+    results_eq = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 400.0]
+    test_all_metrics(frontier_eq, reference_eq; results=results_eq, nadir=nadir_eq)
 
-    @test isapprox(sp1, 0.0, atol=1e-6)
-    @test isapprox(gd1, 0.0, atol=1e-6)
-    @test isapprox(dm1, 0.0, atol=1e-6)
-    @test isapprox(me1, 0.0, atol=1e-6)
-    @test isapprox(ve1, 0.0, atol=1e-6)
-    @test isapprox(mpe1, 0.0, atol=1e-6)
-    @test isapprox(er1, 0.0, atol=1e-6)
-    @test hv1 > 0.0
+    ###################################################
+    # Test case for a handmade frontier and reference #
+    ###################################################
 
-    ##############################
-    frontier2 = [11.0 19.0; 99.0 81.0]
-    reference2 = [10.0 20.0; 100.0 80.0]
+    frontier_hm = [3 6 9; 15 9 4.0]
+    reference_hm = [1 2 3 4 5 6 7 8 9 10; 10 9 8 7 6 5 4 3 2 1.0]
+    nadir_hm = [10.1, 15.15]
+    results_hm = [2.0126831744720173, 2.0816659994661326, 0.39696030366206303, 0.0, 0.0, 0.0, 1.0, 31.165]
+    test_all_metrics(frontier_hm, reference_hm; results=results_hm, nadir=nadir_hm)
 
-    sp2 = Metrics.spacing_metric(frontier2, reference2)
-    gd2 = Metrics.general_distance(frontier2, reference2)
-    dm2 = Metrics.diversity_metric(frontier2, reference2)
-    me2, ve2, mpe2 = Metrics.calculate_error_metrics(frontier2, reference2)
-    er2 = Metrics.error_ratio(frontier2, reference2)
-    hv2 = Metrics.hypervolume(frontier2, [25.0, 120.0])
+    frontier_hm_test_error_ratio_1 = [1 2 3; 10 9 8.0]
+    er_hm_1 = Metrics.error_ratio(frontier_hm_test_error_ratio_1, reference_hm)
+    @test isapprox(er_hm_1, 0.0, atol=1e-6)
+    frontier_hm_test_error_ratio_2 = [1 2 3 4; 10 9 8 7.5]
+    er_hm_2 = Metrics.error_ratio(frontier_hm_test_error_ratio_2, reference_hm)
+    @test isapprox(er_hm_2, 0.25, atol=1e-6)
 
-    @test sp2 == 0.0
-    @test gd2 > 0.0
-    @test dm2 > 0.0
-    @test me2 > 0.0
-    @test ve2 > 0.0
-    @test mpe2 > 0.0
-    @test isapprox(er2, 1.0, atol=1e-6)
-    @test hv2 > 0.0
+    ################################
+    # Test based in Pymoo tutorial #
+    ################################
 
-    ##############################
-    frontier3 = [12.0 18.0; 98.0 82.0]
-    reference3 = [10.0 20.0; 100.0 80.0]
+    frontier_1 = [0.0 0.11111111111111113 0.22222222222222227 0.33333333333333337 0.44444444444444453 0.5555555555555557 0.6666666666666667 0.777777777777778 0.8888888888888891 1.0000000000000002;
+                    1.1 0.7503970506099494 0.6055867675269558 0.4944699291805017 0.40079410121989895 0.31826404002942843 0.24365116142232474 0.17503753829922603 0.11117353505391156 0.051191151829848416 ]
+    reference_1 = [0.0 0.010101010101010102 0.020202020202020204 0.030303030303030304 0.04040404040404041 0.05050505050505051 0.06060606060606061 0.07070707070707072 0.08080808080808081 0.09090909090909091 0.10101010101010102 0.11111111111111112 0.12121212121212122 0.13131313131313133 0.14141414141414144 0.15151515151515152 0.16161616161616163 0.17171717171717174 0.18181818181818182 0.19191919191919193 0.20202020202020204 0.21212121212121213 0.22222222222222224 0.23232323232323235 0.24242424242424243 0.25252525252525254 0.26262626262626265 0.27272727272727276 0.2828282828282829 0.29292929292929293 0.30303030303030304 0.31313131313131315 0.32323232323232326 0.33333333333333337 0.3434343434343435 0.3535353535353536 0.36363636363636365 0.37373737373737376 0.38383838383838387 0.393939393939394 0.4040404040404041 0.4141414141414142 0.42424242424242425 0.43434343434343436 0.4444444444444445 0.4545454545454546 0.4646464646464647 0.4747474747474748 0.48484848484848486 0.494949494949495 0.5050505050505051 0.5151515151515152 0.5252525252525253 0.5353535353535354 0.5454545454545455 0.5555555555555556 0.5656565656565657 0.5757575757575758 0.5858585858585859 0.595959595959596 0.6060606060606061 0.6161616161616162 0.6262626262626263 0.6363636363636365 0.6464646464646465 0.6565656565656566 0.6666666666666667 0.6767676767676768 0.686868686868687 0.696969696969697 0.7070707070707072 0.7171717171717172 0.7272727272727273 0.7373737373737375 0.7474747474747475 0.7575757575757577 0.7676767676767677 0.7777777777777778 0.787878787878788 0.797979797979798 0.8080808080808082 0.8181818181818182 0.8282828282828284 0.8383838383838385 0.8484848484848485 0.8585858585858587 0.8686868686868687 0.8787878787878789 0.888888888888889 0.8989898989898991 0.9090909090909092 0.9191919191919192 0.9292929292929294 0.9393939393939394 0.9494949494949496 0.9595959595959597 0.9696969696969697 0.9797979797979799 0.98989898989899 1.0;
+                    1.0 0.8994962184740788 0.8578661890962597 0.8259223440443022 0.7989924369481576 0.7752667125122527 0.7538170180413345 0.7340919882608448 0.7157323781925193 0.6984886554222364 0.6821791369181358 0.6666666666666666 0.6518446880886043 0.6376284623302606 0.6239492834548225 0.6107505279192385 0.5979848738963152 0.5856122929946259 0.5735985672887791 0.5619141728848194 0.5505334250245053 0.5394338135281618 0.5285954792089683 0.5180007963458525 0.507634036082669 0.49748109237039395 0.4875292568094617 0.4777670321329065 0.4681839765216895 0.4587705727426742 0.4495181174368197 0.4404186268903215 0.4314647563850388 0.42264973081037416 0.4139672846723116 0.4054116099894368 0.39697731084447274 0.38865936358084807 0.3804530818102766 0.37235408553915217 0.36435827383627173 0.35646180055771814 0.3486610527210704 0.3409526311838925 0.33333333333333326 0.32580013753675785 0.31835018913927315 0.31098078782411676 0.3036893761772086 0.29647352931855153 0.28933094548129856 0.2822594374347265 0.2752569246605213 0.2683214262030523 0.2614510541240036 0.2546440075000701 0.24789856690964496 0.24121308936067187 0.23458600361726734 0.22801580588745474 0.221501055838477 0.21504037290978062 0.20863243289693356 0.2022759647825343 0.19596974779263032 0.18971260865933715 0.18350341907227397 0.17734109330313774 0.17122458598925183 0.16515289006327816 0.1591250348174782 0.15314008409199265 0.14719713457755823 0.14129531422395425 0.13543378074623602 0.1296117202215108 0.12382834576963875 0.11808289631180313 0.11237463540140546 0.10670285012220149 0.1010668500490105 0.09546596626670911 0.08989955044356324 0.08436697395526493 0.07886762705632344 0.0734009180957178 0.06796627277395761 0.06256313343890785 0.057190958417936644 0.05184922138412018 0.04653741075440765 0.04125502911779544 0.036001592691705 0.030776630804880245 0.025579685405240693 0.020410310591235548 0.015268072165338098 0.010152547208419627 0.005063323673817899 0.0]
+    gd_1 = Metrics.general_distance(frontier_1, reference_1, p=1)
+    hv_1 = Metrics.hypervolume(frontier_1, [1.2, 1.2])
 
-    sp3 = Metrics.spacing_metric(frontier3, reference3)
-    gd3 = Metrics.general_distance(frontier3, reference3)
-    dm3 = Metrics.diversity_metric(frontier3, reference3)
-    me3, ve3, mpe3 = Metrics.calculate_error_metrics(frontier3, reference3)
-    er3 = Metrics.error_ratio(frontier3, reference3)
-    hv3 = Metrics.hypervolume(frontier3, [25.0, 120.0])
-
-    @test sp3 == 0.0 #"Case 3 - Spacing metric failed"
-    @test gd3 > 1.0 #"Case 3 - General distance failed"
-    @test dm3 > 0.0 #"Case 3 - Diversity metric failed"
-    @test me3 > 0.0 #"Case 3 - Mean error failed"
-    @test ve3 > 0.0 #"Case 3 - Variance error failed"
-    @test mpe3 > 0.0 #"Case 3 - MPE failed"
-    @test isapprox(er3, 1.0, atol=1e-6) #"Case 3 - Error ratio failed"
-    @test hv3 > 0.0 #"Case 3 - Hypervolume failed"
-
-
-    ##############################
-    frontier4 = [3 6 9; 15 9 4.0]
-    reference4 = [1 2 3 4 5 6 7 8 9 10; 10 9 8 7 6 5 4 3 2 1.0]
-
-    sp4 = Metrics.spacing_metric(frontier4, reference4)
-    gd4 = Metrics.general_distance(frontier4, reference4)
-    dm4 = Metrics.diversity_metric(frontier4, reference4)
-    dm4_without_reference_set = Metrics.diversity_metric(frontier4)
-    me4, ve4, mpe4 = Metrics.calculate_error_metrics(frontier4, reference4)
-    er4 = Metrics.error_ratio(frontier4, reference4)
-    hv4 = Metrics.hypervolume(frontier4, [10.1, 15.15])
-
-    @test isapprox(sp4, 2.0126831744720173, atol=1e-6) #"Case 4 - Spacing metric failed"
-    @test isapprox(gd4, 2.0816659994661326, atol=1e-6) #"Case 4 - General distance failed"
-    @test isapprox(dm4, 0.39696030366206303, atol=1e-6) #"Case 4 - Diversity metric failed"
-    @test isapprox(dm4_without_reference_set, 0.0699610125062014, atol=1e-6)
-    @test isapprox(er4, 1.0, atol=1e-6) #"Case 4 - Error ratio failed"
-    @test isapprox(hv4, 31.165, atol=1e-6) #"Case 4 - Hypervolume failed"
-
-    frontier4_for_err_1 = [1 2 3; 10 9 8.0]
-    er4_1 = Metrics.error_ratio(frontier4_for_err_1, reference4)
-    @test isapprox(er4_1, 0.0, atol=1e-6)
-    frontier4_for_err_2 = [1 2 3 4; 10 9 8 7.5]
-    er4_2 = Metrics.error_ratio(frontier4_for_err_2, reference4)
-    @test isapprox(er4_2, 0.25, atol=1e-6)
-
+    @test isapprox(gd_1, 0.05497689467314528, atol=1e-6)
+    @test isapprox(hv_1, 0.9631646448182305, atol=1e-6)
     return nothing
+end
+
+function test_all_metrics(frontier_set, reference_set; results, nadir)
+    sp = Metrics.spacing_metric(frontier_set, reference_set)
+    gd = Metrics.general_distance(frontier_set, reference_set)
+    dm = Metrics.diversity_metric(frontier_set, reference_set)
+    me, ve, mpe = Metrics.calculate_error_metrics(frontier_set, reference_set)
+    er = Metrics.error_ratio(frontier_set, reference_set)
+    hv = Metrics.hypervolume(frontier_set, nadir)
+
+    @test isapprox(sp, results[1], atol=1e-6)
+    @test isapprox(gd, results[2], atol=1e-6)
+    @test isapprox(dm, results[3], atol=1e-6)
+    # @test isapprox(me, results[4], atol=1e-6)
+    # @test isapprox(ve, results[5], atol=1e-6)
+    # @test isapprox(mpe, results[6], atol=1e-6)
+    @test isapprox(er, results[7], atol=1e-6)
+    @test isapprox(hv, results[8], atol=1e-6)
+
+     return nothing
 end

@@ -41,20 +41,22 @@ Computes the Generalized Distance (GD) between the `frontier_set` and the `refer
 The GD is calculated as the square root of the average of the squared distances from each solution in the frontier_set to its nearest neighbor in the reference set.
 The smaller the GD, the closer the frontier_set is to the reference set, indicating better convergence towards the Pareto optimal front.
 """
-function general_distance(frontier_set::Matrix{F}, reference_set::Matrix{F}) where F <: Number
+function general_distance(frontier_set::Matrix{F}, reference_set::Matrix{F}; p = 2) where F <: Number
     @assert size(frontier_set, 1) == size(reference_set, 1) "Number of objectives do not match. Each line must represent an objective."
     n = size(frontier_set, 2)
-    distances_set = zeros(n)
+    distances = 0.0
     for i in axes(frontier_set, 2)
         dmin = Inf
+        sol_i = @view frontier_set[:, i]
         for j in axes(reference_set, 2)
-            d = norm(frontier_set[:, i] .- reference_set[:, j])
+            sol_j = @view reference_set[:, j]
+            d = norm(sol_i - sol_j)
             dmin = min(dmin, d)
         end
-        distances_set[i] = dmin
+        distances += dmin^p
     end
 
-    return sqrt(sum(distances_set .^ 2)) / n
+    return (distances^(1/p)) / n
 end
 
 ############################
@@ -109,6 +111,7 @@ Computes error metrics between `frontier_set` and `reference`:
 - MPE: Mean Percentage Error considering both absolute and square root differences.
 """
 function calculate_error_metrics(frontier_set::Matrix{F}, reference_set::Matrix{F}) where F <: Number
+    @warn("Maybe with bugs")
     @assert size(frontier_set, 1) == size(reference_set, 1) "Number of objectives do not match. Each line must represent an objective."
 
     m, n_f = size(frontier_set)
@@ -184,6 +187,7 @@ to a reference point. The hypervolume is a metric that measures the size of the 
 space dominated by a Pareto front with respect to a reference point.
 """
 function hypervolume(frontier_set::Matrix{F}, ref_point::Vector{F}) where F <: Number
+    @warn("Maybe with bugs")
     @assert size(frontier_set, 1) == length(ref_point) "Number of objectives does not match reference."
     P = copy(frontier_set')
     R = copy(ref_point)
@@ -216,78 +220,6 @@ function __hv_recursive(P::Matrix{F}, R::Vector{F}) where F <: Number
         P = P[1:end-1, :]
     end
     return hv
-end
-
-#######################
-# Dominance functions #
-#######################
-
-
-
-function normalize_front(data)
-    if data isa Vector
-        if !isempty(data) && eltype(data) <: SolutionJuMP
-            return hcat([sol.objectives for sol in data]...)
-        elseif !isempty(data) && eltype(data) <: SolutionNSGA
-            return hcat([sol.objectives for sol in data]...)
-        elseif !isempty(data) && eltype(data) <: AbstractVector
-            mat = hcat(data...)
-            return size(mat, 1) <= size(mat, 2) ? mat : mat'
-        else
-            error("Unsupported vector format: $(eltype(data))")
-        end
-
-    elseif data isa AbstractMatrix
-        return size(data, 1) <= size(data, 2) ? data : data'
-
-    else
-        error("Unsupported data type: $(typeof(data))")
-    end
-end
-
-"""
-    is_dominated_by_reference(point, reference)
-
-Check if a given `point` is dominated by any point in the `reference` set.
-"""
-function is_dominated_by_reference(point::Vector{Float64}, reference::AbstractMatrix{Float64}; sense::Vector{String}=fill("Min", size(reference, 1)))
-    @assert size(reference, 1) == length(point) "Incompatible dimensions."
-
-    for i in 1:size(reference, 2)
-        if dominates(reference[:, i], point; sense=sense)
-            return true
-        end
-    end
-    return false
-end
-
-function dominates(a::AbstractVector{Float64}, b::AbstractVector{Float64}; sense::Vector{String})
-    @assert length(a) == length(b) == length(sense) "Incompatible number of objectives."
-
-    as_good_in_all = true
-    at_least_better_in_one = false
-
-    for i in eachindex(a)
-        if sense[i] == "Min"
-            if a[i] > b[i]
-                as_good_in_all = false
-                break
-            elseif a[i] < b[i]
-                at_least_better_in_one = true
-            end
-        elseif sense[i] == "Max"
-            if a[i] < b[i]
-                as_good_in_all = false
-                break
-            elseif a[i] > b[i]
-                at_least_better_in_one = true
-            end
-        else
-            error("sense[$i] must be \"Min\" or \"Max\".")
-        end
-    end
-
-    return as_good_in_all && at_least_better_in_one
 end
 
 end

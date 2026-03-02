@@ -1,5 +1,5 @@
 """
-    generate_pareto(solution_set, efficiency_eps)
+    generate_pareto(solution_set{<:AbstractSolution}, efficiency_eps)
 
 Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions
 
@@ -24,10 +24,21 @@ function generate_pareto(solution_set::Vector{S}, efficiency_eps::Float64) where
             push!(pareto_set, solution)
         end
     end
-    pareto_plot(solution_set)
     return pareto_set
 end
 
+"""
+    generate_pareto(solution_set::Matrix{<:Number}, efficiency_eps)
+
+Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions
+
+# Arguments
+- `solution_set`: A `m × n` matrix containing the `n` solutions from which the Pareto set will be generated.
+- `efficiency_eps::Float64`: A float value indicating the error tolerance for the comparison.
+
+# Returns
+- `pareto_set`: A vector containing the solutions that compose the Pareto set.
+"""
 function generate_pareto(solution_set::Matrix{F}, efficiency_eps::Float64) where F <: Number
 
     if size(solution_set, 2) == 0
@@ -35,7 +46,7 @@ function generate_pareto(solution_set::Matrix{F}, efficiency_eps::Float64) where
         return solution_set
     end
 
-    pareto_set = zeros(type(eltype(solution_set)), size(solution_set, 1), 0)
+    pareto_set = zeros(F, size(solution_set, 1), 0)
     for i in axes(solution_set, 2)
         solution = @view solution_set[:, i]
         if __is_efficient(solution, solution_set, efficiency_eps
@@ -43,7 +54,6 @@ function generate_pareto(solution_set::Matrix{F}, efficiency_eps::Float64) where
             pareto_set = hcat(pareto_set, solution)
         end
     end
-    pareto_plot(solution_set)
     return pareto_set
 end
 
@@ -56,21 +66,11 @@ end
 
 Checks whether a solution is efficient with respect to a set of solutions.
 """
-function __is_efficient(solution::S, solution_set::Vector{S}, error::Float64) where S <: AbstractSolution
-    for sol_k in solution_set
-        if _is_dominated_by(solution_to_check = solution.objectives, dominating_solution = sol_k.objectives, error=error
-                            ) && !(_solutions_are_equals(solution.objectives, sol_k.objectives, error))
-            return false
-        end
-    end
-    return true
-end
-
-function __is_efficient(solution::Vector{F}, solution_set::Matrix{F}, error::Float64) where F <: Number
-    for k in axes(solution_set, 2)
-        sol_k = @view solution_set[:, k]
-        if _is_dominated_by(solution_to_check = solution, dominating_solution = sol_k, error=error
-                            ) && !(_solutions_are_equals(solution, sol_k, error))
+function __is_efficient(solution, solution_set, error::Float64)
+    for k in __get_set_of_solutions(solution_set)
+        sol_k = __get_solution_from_set(solution_set, k)
+        if _is_dominated_by(solution_to_check = __objs(solution), dominating_solution = __objs(sol_k), error=error
+                           ) && !(_solutions_are_equals(__objs(solution), __objs(sol_k), error))
             return false
         end
     end
@@ -82,24 +82,16 @@ end
 
 Checks whether a solution is present in a given frontier and returns a boolean value indicating its existence in the frontier.
 """
-function __is_solution_in_frontier(solution::S, frontier::Vector{S}, error::Float64) where S <: AbstractSolution
-    for sol_k in frontier
-        if _solutions_are_equals(solution.objectives, sol_k.objectives, error)
+function __is_solution_in_frontier(solution, frontier, error::Float64)
+    for k in __get_set_of_solutions(frontier)
+        sol_k = __get_solution_from_set(frontier, k)
+        if _solutions_are_equals(__objs(solution), __objs(sol_k), error)
             return true
         end
     end
     return false
 end
 
-function __is_solution_in_frontier(solution::Vector{F}, frontier::Matrix{F}, error::Float64) where F <: Number
-    for k in axes(frontier, 2)
-        sol_k = @view frontier[:, k]
-        if _solutions_are_equals(solution, sol_k, error)
-            return true
-        end
-    end
-    return false
-end
 
 """
     _solutions_are_equals(solution_1, solution_2, error)
@@ -136,3 +128,30 @@ function _is_dominated_by(;solution_to_check::Vector{F}, dominating_solution::Ve
     return result
 end
 
+####################
+# Helper functions #
+####################
+
+function __get_solution_from_set(solution_set::Vector{S}, index::Int) where S <: AbstractSolution
+    return solution_set[index]
+end
+
+function __get_solution_from_set(solution_set::Matrix{F}, index::Int) where F <: Number
+    return @view solution_set[:, index]
+end
+
+function __objs(solution::S) where S <: AbstractSolution
+    return solution.objectives
+end
+
+function __objs(solution::Vector{F}) where F <: Number
+    return solution
+end
+
+function __get_set_of_solutions(solution_set::Vector{S}) where S <: AbstractSolution
+    return eachindex(solution_set)
+end
+
+function __get_set_of_solutions(solution_set::Matrix{F}) where F <: Number
+    return axes(solution_set, 2)
+end
