@@ -1,12 +1,14 @@
-function radar_plot(set::Vector{Vector{V}}, categories::Vector{String}; name_set = string.(collect(eachindex(set)))) where V
+function radar_plot(frontier_set::Matrix{F}, categories::Vector{String} = ["f_$(i)" for i in axes(frontier_set, 1)];
+        name_set = "Solution " .* string.(collect(axes(frontier_set, 2)))) where F <: Number
     fig = Plot()
-    for (i, (values_i, name_i)) in enumerate(zip(set, name_set))
+    for (j, name_j) in enumerate(name_set)
+        values_j = @view frontier_set[:, j]
         addtraces!(fig,
             scatterpolar(
-                r=values_i,
+                r=values_j,
                 theta=categories,
                 fill="toself",
-                name=name_i
+                name=name_j
             )
         )
     end

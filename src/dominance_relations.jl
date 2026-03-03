@@ -98,7 +98,7 @@ end
 
 Checks whether two solutions are equal, and returns a boolean value indicating their equality.
 """
-function _solutions_are_equals(solution_1::Vector{F}, solution_2::Vector{F}, error::Float64) where F <: Number
+function _solutions_are_equals(solution_1, solution_2, error::Float64)
     for o in eachindex(solution_1)
         if abs(solution_1[o] - solution_2[o]) > error
             return false
@@ -113,7 +113,7 @@ end
 Check if `solution_to_check` is dominated by `dominating_solution`, considering the error tolerance. 
 The function should return true if the `dominating_solution` dominates `solution_to_check`, and false otherwise.
 """
-function _is_dominated_by(;solution_to_check::Vector{F}, dominating_solution::Vector{F}, error::Float64) where F <: Number
+function _is_dominated_by(;solution_to_check, dominating_solution, error::Float64)
     at_least_better_in_one = false
     as_good_in_all = true
     for o in eachindex(solution_to_check)
@@ -144,7 +144,7 @@ function __objs(solution::S) where S <: AbstractSolution
     return solution.objectives
 end
 
-function __objs(solution::Vector{F}) where F <: Number
+function __objs(solution::AbstractArray)
     return solution
 end
 

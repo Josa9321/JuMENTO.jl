@@ -3,7 +3,6 @@ module JuMENTO
 using JuMP
 import MathOptInterface as MOI
 
-using Plots
 using Printf
 using LinearAlgebra
 using Statistics
@@ -11,14 +10,12 @@ using Random
 
 include("structs.jl")
 include("dominance_relations.jl")
+include("normalize.jl")
 include("options.jl")
 
 # Colocar em um módulo os métodos da família AUGMECON
 # Colocar em um módulo as heurísticas
 # Reaproveitar funções declaradas para o AUGMECON para serem usadas nas heurísticas
-# Colocar em um módulos os plots e as métricas
-
-
 
 include("augmecon.jl")
 
@@ -26,10 +23,10 @@ include("nsga2_options.jl")
 include("nsga2.jl")
 
 include("Metrics.jl")
-include("Plots/Plots.jl")
+include("Plots/MultiPlots.jl")
 
 include("utils.jl")
 
-export augmecon, nsga2, Metrics, SolutionJuMP, ReportAUG
+export normalize_frontier, Metrics, MultiPlots, SolutionJuMP, ReportAUG, augmecon, nsga2
 
 end
