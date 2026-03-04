@@ -12,8 +12,8 @@ This module provides functions to compute performance metrics for multi-objectiv
 
 For further details on these metrics, see:
 
-Silva, Herthel, Subramanian. (2019).
-*A multi-objective evolutionary algorithm for a class of mean-variance portfolio selection problems*.
+Silva, Y. L. T. V., Herthel, A. B., & Subramanian, A. (2019).
+"A multi-objective evolutionary algorithm for a class of mean-variance portfolio selection problems."
 Expert Systems with Applications, 133, 225–241.
 https://doi.org/10.1016/j.eswa.2019.05.018
 """

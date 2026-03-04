@@ -1,3 +1,17 @@
+"""
+    MultiPlots
+
+This module provides visual representations of Pareto frontiers to analyze and compare the performance of different solutions or algorithms in a multi-objective optimization context.
+
+The module includes the following visualization tools:
+- `parallel_coordinates` plot;
+- `radar` chart;
+- `scatter` plot; and
+- `level_diagram` plot.
+
+The module relies on the PlotlyJS library for interactive plotting.
+The `COLORS_SET` constant provides a predefined set of 25 colors for consistent and visually appealing plots - if the number of needed colors exceeds this set, it will cycle through the colors.
+"""
 module MultiPlots
 
 using PlotlyJS, LinearAlgebra

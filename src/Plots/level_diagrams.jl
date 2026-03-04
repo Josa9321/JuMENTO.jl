@@ -1,7 +1,39 @@
-function level_diagrams_plot(set_of_frontiers::Vector{Matrix{F}},
+"""
+    level_diagrams(set_of_frontiers::Vector{Matrix{F}};
+        normalized_set_of_frontiers=__normalize_sets(set_of_frontiers),
+        categories::Vector{String}=["f_\$(i)" for i in axes(set_of_frontiers[1], 1)],
+        name_set::Vector{String}=["Method \$(k)" for k in eachindex(set_of_frontiers)],
+        type_plot::String="markers+lines",
+        p=2) where {F<:Number}
+
+Create level diagrams for a collection of Pareto frontiers.
+
+Each element of `set_of_frontiers` must follow the `m × n` convention,
+where rows correspond to objectives and columns correspond to solutions.
+
+For each objective, a subplot is generated in which:
+- The x-axis represents the values of that objective across the solutions.
+- The y-axis represents the distance from each solution to the ideal point,
+  computed using the `p`-norm.
+
+Arguments:
+- `normalized_set_of_frontiers` is the normalized version of the frontiers.
+  If not explicitly provided, the function normalizes the sets using a
+  common minimum and maximum point across all frontiers to ensure
+  comparability, assuming maximization objectives.
+- `categories` defines the labels for each objective.
+- `name_set` defines the labels for each frontier (e.g., different methods).
+- `type_plot` specifies the scatter style (e.g., `"markers"`, `"lines"`,
+  or `"markers+lines"`).
+- `p` specifies the norm used to compute the distance to the ideal point.
+
+Level diagrams are useful for simultaneously analyzing convergence
+(distance to the ideal point) and distribution along each objective.
+"""
+function level_diagrams(set_of_frontiers::Vector{Matrix{F}};
     normalized_set_of_frontiers=__normalize_sets(set_of_frontiers),
-    categories::Vector{String}=["f_$(i)" for i in axes(set_of_frontiers, 1)],
-    names_set::Vector{String}=["Method $(k)" for k in eachindex(set_of_frontiers)];
+    categories::Vector{String}=["f_$(i)" for i in axes(set_of_frontiers[1], 1)],
+    name_set::Vector{String}=["Method $(k)" for k in eachindex(set_of_frontiers)],
     type_plot::String="markers+lines",
     p=2) where {F<:Number}
 
@@ -13,16 +45,46 @@ function level_diagrams_plot(set_of_frontiers::Vector{Matrix{F}},
         subplot_titles=categories[:, :]
     )
     for (idx, set) in enumerate(set_of_frontiers)
-        __level_diagrams!(fig, set, normalized_set_of_frontiers[idx], type_plot, names_set[idx], idx)
+        __level_diagrams!(fig, set, normalized_set_of_frontiers[idx], type_plot, name_set[idx], idx)
     end
     return fig
 end
 
+"""
+    level_diagrams(frontier_set::Matrix{F};
+        normalized_set = normalize_frontier(frontier_set),
+        categories::Vector{String} = ["f_\$(i)" for i in axes(frontier_set, 1)],
+        name::String = "Method",
+        type_plot::String = "markers+lines",
+        p = 2) where {F <: Number}
 
-function level_diagrams_plot(frontier_set::Matrix{F},
+Create level diagrams for a single Pareto frontier.
+
+The `frontier_set` must follow the `m × n` convention, where rows correspond
+to objectives and columns correspond to solutions.
+
+For each objective, a subplot is generated in which:
+- The x-axis represents the values of that objective across the solutions.
+- The y-axis represents the distance from each solution to the ideal point,
+  computed using the `p`-norm.
+
+Arguments:
+- `normalized_set` is the normalized version of the frontier. If not
+  explicitly provided, the function normalizes the frontier before
+  computing distances to the ideal point, assuming maximization objectives.
+- `categories` defines the labels for each objective.
+- `name` specifies the label of the frontier (e.g., the method name).
+- `type_plot` specifies the scatter style (e.g., `"markers"`, `"lines"`,
+  or `"markers+lines"`).
+- `p` specifies the norm used to compute the distance to the ideal point.
+
+Level diagrams provide a visual assessment of both convergence
+(distance to the ideal point) and distribution along each objective.
+"""
+function level_diagrams(frontier_set::Matrix{F};
     normalized_set=normalize_frontier(frontier_set),
     categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)],
-    name::String="Method";
+    name::String="Method",
     type_plot::String="markers+lines",
     p=2) where {F<:Number}
 
@@ -36,33 +98,6 @@ function level_diagrams_plot(frontier_set::Matrix{F},
     return fig
 end
 
-# function level_diagrams_plot(frontier::Matrix{F}, cats=["f_$(i)" for i in axes(frontier, 1)];
-#     p=2, type_plot::String="markers+lines") where {F<:Number}
-#
-#     @warn("Still not done")
-#     m = size(frontier, 1)
-#     fig = make_subplots(
-#         rows=m,
-#         subplot_titles=cats[:, :]
-#     )
-#     J_norm = get_common_yaxis_LD(frontier, p=p)
-#     for i in axes(frontier, 1)
-#         obj_i = view(frontier, i, :)
-#         order = sortperm(obj_i)
-#         add_trace!(
-#             fig,
-#             scatter(
-#                 x=view(frontier, i, :)[order],
-#                 y=J_norm[order],
-#                 mode=type_plot,
-#             ),
-#             row=i
-#         )
-#     end
-#     return fig
-# end
-#
-
 function __normalize_sets(set_of_frontiers)
     minimum_point = minimum(hcat(minimum.(set_of_frontiers, dims=2)...), dims=2)
     maximum_point = maximum(hcat(maximum.(set_of_frontiers, dims=2)...), dims=2)
@@ -74,7 +109,6 @@ function __normalize_sets(set_of_frontiers)
 end
 
 function get_common_yaxis_LD(normalized_set; p=2)
-    # normalized_set = normalize_frontier(frontier_set)
     return [norm(1.0 .- view(normalized_set, :, j), p) for j in axes(normalized_set, 2)]
 end
 

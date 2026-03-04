@@ -1,6 +1,34 @@
-function scatter_plot(set_of_frontiers::Vector{Matrix{F}},
+"""
+    scatter(set_of_frontiers::Vector{Matrix{F}};
+            categories::Vector{String} = ["f_i" for i in axes(set_of_frontiers, 1)],
+            name_set::Vector{String} = ["Method k" for k in eachindex(set_of_frontiers)],
+            is_3d::Bool = false,
+            type_plot::String = "markers+lines") where {F <: Number}
+
+Create scatter plots for a collection of Pareto frontiers.
+
+The `set_of_frontiers` argument is a vector of matrices, where each matrix
+represents a frontier. Each frontier must follow the convention of an
+`m × n` matrix, where rows correspond to objectives and columns correspond
+to solutions.
+
+- `categories` defines the labels for each objective.
+- `name_set` defines the labels for each frontier (e.g., different methods).
+- `is_3d` determines whether a 3D plot is generated when there are exactly
+  three objectives.
+- `type_plot` specifies the scatter style (e.g., `"markers"`, `"lines"`,
+  or `"markers+lines"`).
+
+Behavior:
+- If the number of objectives is 2, a 2D scatter plot is generated.
+- If the number of objectives is 3 and `is_3d == true`, a 3D scatter plot is generated.
+- If the number of objectives is 3 and `is_3d == false`, or greater than 3,
+  a matrix of pairwise 2D scatter plots is generated to visualize the
+  relationships between objectives.
+"""
+function scatter_mo(set_of_frontiers::Vector{Matrix{F}};
     categories::Vector{String}=["f_$(i)" for i in axes(set_of_frontiers, 1)],
-    names_set::Vector{String}=["Method $(k)" for k in eachindex(set_of_frontiers)];
+    name_set::Vector{String}=["Method $(k)" for k in eachindex(set_of_frontiers)],
     is_3d::Bool=false, type_plot::String="markers+lines") where {F<:Number}
 
     m = size(set_of_frontiers[1], 1)
@@ -8,16 +36,42 @@ function scatter_plot(set_of_frontiers::Vector{Matrix{F}},
 
     fig = nothing
     if m == 2
-        fig = __2d_scatter(set_of_frontiers, categories, type_plot, names_set)
+        fig = __2d_scatter(set_of_frontiers, categories, type_plot, name_set)
     elseif m == 3 && is_3d
-        fig = __3d_scatter(set_of_frontiers[1], categories, type_plot, names_set[1])
+        fig = __3d_scatter(set_of_frontiers[1], categories, type_plot, name_set[1])
     else
-        fig = __nd_scatter(set_of_frontiers, categories, type_plot, names_set)
+        fig = __nd_scatter(set_of_frontiers, categories, type_plot, name_set)
     end
     return fig
 end
 
-function scatter_plot(frontier_set::Matrix{F}, categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)];
+"""
+    scatter(frontier_set::Matrix{F};
+            categories::Vector{String} = ["f_i" for i in axes(frontier_set, 1)],
+            is_3d::Bool = false,
+            name::String = "Method",
+            type_plot::String = "markers+lines") where {F <: Number}
+
+Create a scatter plot for a single Pareto frontier.
+
+The `frontier_set` must follow the `m × n` convention, where rows correspond
+to objectives and columns correspond to solutions.
+
+- `categories` defines the labels for each objective.
+- `name` specifies the label of the frontier (e.g., the method name).
+- `is_3d` determines whether a 3D plot is generated when there are exactly
+  three objectives.
+- `type_plot` specifies the scatter style (e.g., `"markers"`, `"lines"`,
+  or `"markers+lines"`).
+
+Behavior:
+- If the number of objectives is 2, a 2D scatter plot is generated.
+- If the number of objectives is 3 and `is_3d == true`, a 3D scatter plot is generated.
+- If the number of objectives is 3 and `is_3d == false`, or greater than 3,
+  a matrix of pairwise 2D scatter plots is generated to visualize the
+  relationships between objectives.
+"""
+function scatter_mo(frontier_set::Matrix{F}; categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)],
     is_3d::Bool=false, name::String="Method", type_plot::String="markers+lines") where {F<:Number}
     fig = nothing
     if size(frontier_set, 1) == 2
@@ -33,7 +87,6 @@ end
 ###################
 # Intra functions #
 ###################
-
 
 function __2d_scatter(frontiers, categories, type_plot, names)
     fig = plot(

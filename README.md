@@ -186,13 +186,96 @@ Its important to clarify that the methods implemented here assume the frontier s
 ### Plot Results
 
 There are a variety of plotting functions available in the `JuMENTO.MultiPlots` module that can be used to visualize the Pareto frontiers. The options implemented are:
- - Scatter plots: ;
+ - Scatter plots;
  - Parallel coordinate plots;
- - Radar plots for few solutions;
+ - Radar charts;
  - Level diagrams.
 
+The following sections show how to use some of the plotting functions defined in the `JuMENTO.MultiPlots` module.
+To further explore the plotting capabilities, you can check the documentation of each plotting function.
+
+#### Radar Charts
+
 ```julia
+using JuMENTO
+
+frontier_set = [
+    7 4 2 6;
+    10 5 10 7;
+    4 10 21 13
+]
+frontier_normalized = normalize_frontier(frontier_set, [:min, :max, :min])
+name_set = ["Product A", "Product B", "Product C", "Product D"]
+
+cats = ["Cost", "Quality", "Time"]
+fig = MultiPlots.radar(frontier_normalized, categories=cats, name_set=name_set)
 ```
+
+For this frontier, the figure would look like this:
+![Radar Chart](images/radar_chart.png)
+
+#### Parallel Coordinate Plots
+
+```julia
+using JuMENTO
+
+frontier_set = [
+    1 2 3 4 5 6 7 8 9 10.0;
+    10 9 8 7 6 5 4 3 2 1;
+    4 10 21 4 21 23 4 2 9 10
+]
+cats = ["Cost", "Quality", "Time"]
+fig = MultiPlots.parallel_coordinates(frontier_set, categories=cats)
+```
+
+The resulting figure would look like this:
+
+![Parallel Coordinate Plot](images/parallel_coordinates.png)
+
+
+#### Scatter Plots
+
+```julia
+using JuMENTO, Random
+
+Random.seed!(1)
+
+m=2
+
+v1 = JuMENTO.generate_pareto(rand(1:100.0, m, 30), 1e-6)
+v2 = JuMENTO.generate_pareto(rand(1:100.0, m, 24), 1e-6)
+v3 = JuMENTO.generate_pareto(rand(1:100.0, m, 100), 1e-6)
+
+cats = ["Profit", "Quality"]
+names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
+
+fig = MultiPlots.scatter_mo([v1, v2, v3], categories=cats, name_set=names)
+```
+
+The resulting figure would look like this:
+
+![Scatter Plot](images/scatter.png)
+
+#### Level Diagrams
+
+```julia
+using JuMENTO, Random
+
+Random.seed!(1)
+
+m=3
+
+cats = ["Profit", "Quality", "Public Reception"]
+names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
+
+v1 = JuMENTO.generate_pareto(rand(1:100.0, m, 30), 1e-6)
+v2 = JuMENTO.generate_pareto(rand(1:100.0, m, 24), 1e-6)
+v3 = JuMENTO.generate_pareto(rand(1:100.0, m, 100), 1e-6)
+fig = MultiPlots.level_diagrams([v1, v2, v3], categories=cats, names_set=names)
+```
+
+The resulting figure would look like this:
+![Level Diagrams](images/level_diagrams.png)
 
 ### Metrics for Evaluation
 
@@ -266,6 +349,7 @@ To test the implemented multi-objective optimization methods, you can access the
 ### **Additional content**
 
 - Coello Coello, C. A. (2002). "Theoretical and numerical constraint-handling techniques used with evolutionary algorithms: A survey of the state of the art." *Computer Methods in Applied Mechanics and Engineering*, 191(11–12), 1245–1287. [https://doi.org/10.1016/S0045-7825(01)00323-1](https://doi.org/10.1016/S0045-7825(01)00323-1)
+- Reynoso-Meza, G., Blasco, X., Sanchis, J., & Herrero, J. M. (2013). Comparison of design concepts in multi-criteria decision-making using level diagrams. Information Sciences, 221, 124–141. [https://doi.org/10.1016/j.ins.2012.09.049](https://doi.org/10.1016/j.ins.2012.09.049)
 - Silva, Y. L. T. V., Herthel, A. B., & Subramanian, A. (2019). "A multi-objective evolutionary algorithm for a class of mean-variance portfolio selection problems." *Expert Systems with Applications*, 133, 225–241. [https://doi.org/10.1016/j.eswa.2019.05.018](https://doi.org/10.1016/j.eswa.2019.05.018)
 - JuMP Documentation: [https://jump.dev](https://jump.dev)
 

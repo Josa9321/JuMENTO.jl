@@ -1,6 +1,15 @@
-function parallel_coordinates_plot(frontier_set::Matrix{F},
+"""
+    parallel_coordinates(frontier_set::Matrix{F};
+        categories::Vector{String}=["f_i" for i in axes(frontier_set, 1)]) where {F<:Number}
+
+Plots a parallel coordinates chart for the given frontier set.
+The optional `categories` vector provides labels for each objective.
+"""
+function parallel_coordinates(frontier_set::Matrix{F};
         categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)]) where {F<:Number}
+
     global COLORS_SET
+    @assert size(frontier_set, 1) == length(categories) "The number of categories must match the number of objectives (rows) in the frontier set."
 
     min_point = minimum(frontier_set, dims=2)
     max_point = maximum(frontier_set, dims=2)
