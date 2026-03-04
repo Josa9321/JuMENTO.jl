@@ -24,17 +24,17 @@ It integrates seamlessly with [JuMP](https://jump.dev/) models and provides:
 
 - [Installation](#installation)
 - [How to Use](#how-to-use)
-  - [1. Build a Model](#1-build-a-model)
-  - [2. Augmented ε-Constraint Method (AUGMECON)](#2-augmented-ε-constraint-method-augmecon)
-      - [2.1. Configure User Options for AUGMECON](#21-configure-user-options-for-augmecon)
-      - [2.2. Solve with AUGMECON](#22-solve-with-augmecon)
-  - [3. NSGA-II](#3-nsga-ii)
-      - [3.1. Configure User Options for NSGA-II](#31-configure-user-options-for-nsga-ii)
-      - [3.2. Solve with NSGA-II](#32-solve-with-nsga-ii)
-  - [4. Evaluation Frontiers](#4-evaluation-frontiers)
-      - [4.1. Plot Results](#41-plot-results)
-      - [4.2. Metrics for Evaluation](#42-metrics-for-evaluation)
-- [Example Problems](#-example-problems)
+  - [Build a Model](#build-a-model)
+  - [Augmented ε-Constraint Method (AUGMECON)](#augmented-ε-constraint-method-augmecon)
+      - [Configure User Options for AUGMECON](#configure-user-options-for-augmecon)
+      - [Solve with AUGMECON](#solve-with-augmecon)
+  - [NSGA-II](#nsga-ii)
+      - [Configure User Options for NSGA-II](#configure-user-options-for-nsga-ii)
+      - [Solve with NSGA-II](#solve-with-nsga-ii)
+- [Evaluating Frontiers](#evaluating-frontiers)
+  - [Plot Results](#plot-results)
+  - [Metrics for Evaluation](#metrics-for-evaluation)
+- [Example Problems](#example-problems)
 - [References](#-references)
 
 ---
@@ -52,7 +52,7 @@ Pkg.add(url="https://github.com/Josa9321/JuMENTO.jl")
 
 ## **How to Use**
 
-### 1. Build a Model
+### Build a Model
 To solve problems with JuMENTO, you must first define a **JuMP** model (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/)).
 Below is an example showing how to build a model for use with JuMENTO:
 
@@ -98,13 +98,13 @@ As mentioned earlier, the objective sense for each objective can be set individu
 
 ---
 
-### 2. Augmented ε-Constraint Method (AUGMECON)
+### Augmented ε-Constraint Method (AUGMECON)
 
 The AUGMECON method is an exact approach that generates the Pareto frontier by solving a series of single-objective optimization problems. It is based on the ε-constraint method, which transforms a multi-objective problem into a single-objective one by treating all but one objective as constraints with specified bounds (ε values). 
 
 For more details on the method, please refer to the original paper by Mavrotas (2009) and its improved version by Mavrotas and Florios (2013).
 
-#### 2.1. Configure User Options for AUGMECON
+#### Configure User Options for AUGMECON
 
 When using an AUGMECON-based method, you can control its behavior by passing keyword options to `augmecon`. Some options are required; others are optional. The table below summarizes the available parameters:
 
@@ -120,7 +120,7 @@ When using an AUGMECON-based method, you can control its behavior by passing key
 | `print_level`         | Logging detail (0 or 1)                                               | 0             |
 
 
-#### 2.2. Solve with AUGMECON
+#### Solve with AUGMECON
 
 Solve the model above with the `augmecon` function. The call returns the Pareto frontier (a `Vector{SolutionJuMP}`) and a report with method diagnostics.
 
@@ -136,13 +136,13 @@ frontier, report = augmecon(model, objs, grid_points=10)
 
 ---
 
-### 3. NSGA-II
+### NSGA-II
 
 **WARNING: NSGA-II is not properly implemented yet. Use with caution.**
 
 NSGA-II is a popular metaheuristic algorithm for solving multi-objective optimization problems. It is based on the concept of non-dominated sorting and uses a fast elitist approach to maintain a diverse set of solutions. The algorithm iteratively evolves a population of candidate solutions through selection, crossover, and mutation operations, aiming to approximate the Pareto frontier.
 
-#### 3.1. Configure User Options for NSGA-II
+#### Configure User Options for NSGA-II
 
 To use AUGMECON, the user can provide some additional information that will be taken into account when making a decision. Below are some of the details:
 
@@ -167,7 +167,7 @@ To use AUGMECON, the user can provide some additional information that will be t
 
 *NOTE*: The default_range value is necessary when no upper bounds are established for a variable. Therefore, a float value is used to determine a possible range. It's also important to note that a very large default_range value can cause the number of generations required to reach a viable solution to take a long time.
 
-#### 3.2. Solve with NSGA-II
+#### Solve with NSGA-II
 
 To use NSGA-II, you need to call it with two objects that will store the results. For options, you need to add a ";" after the model. Below is an example:
 
@@ -177,13 +177,13 @@ frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:quadratic)
 
 ---
 
-### 4. Evaluating Frontiers
+## Evaluating Frontiers
 
 To evaluate the quality of the obtained Pareto frontiers, you can use the plotting and metrics tools provided by JuMENTO. These tools allow you to visualize the trade-offs between objectives and quantitatively assess the performance of different algorithms.
 
 Its important to clarify that the methods implemented here assume the frontier set $F$ is a $m × n$ matrix, where each of the $m$ rows corresponds to an specific objective, and each of the $n$ solutions is represented by a column.
 
-#### 4.1. Plot Results
+### Plot Results
 
 There are a variety of plotting functions available in the `JuMENTO.MultiPlots` module that can be used to visualize the Pareto frontiers. The options implemented are:
  - Scatter plots: ;
@@ -194,7 +194,7 @@ There are a variety of plotting functions available in the `JuMENTO.MultiPlots` 
 ```julia
 ```
 
-#### 4.2. Metrics for Evaluation
+### Metrics for Evaluation
 
 **WARNING: hypervolume metric is still in development, and may be slow to calculate for frontiers with lots of objetives**
 
@@ -224,13 +224,13 @@ frontier_set = [3 6 9; 15 9 4.0]
 reference_set = [1 2 3 4 5 6 7 8 9 10; 10 9 8 7 6 5 4 3 2 1.0]
 nadir = [10.1, 15.15]
 
-sp = Metrics.spacing_metric(frontier_set, reference_set)
+sp = Metrics.spacing(frontier_set, reference_set)
 # 2.0126831744720173
 
 gd = Metrics.general_distance(frontier_set, reference_set)
 # 2.0816659994661326
 
-dm = Metrics.diversity_metric(frontier_set, reference_set)
+dm = Metrics.diversity(frontier_set, reference_set)
 # 0.39696030366206303
 
 er = Metrics.error_ratio(frontier_set, reference_set)
@@ -257,12 +257,9 @@ To test the implemented multi-objective optimization methods, you can access the
 ### **AUGMECON**
 
 - Mavrotas, G. (2009). "Effective implementation of the epsilon-constraint method in Multi-Objective Mathematical Programming problems." *Applied Mathematics and Computation*, 213(2), 455–465. [DOI: 10.1016/j.amc.2009.03.027](https://doi.org/10.1016/j.amc.2009.03.027)
-
-### **AUGMECON 2**
-
 - Mavrotas, G., & Florios, K. (2013). "An improved version of the augmented ε-constraint method (AUGMECON2) for finding the exact Pareto set in Multi-Objective Integer Programming problems." *Applied Mathematics and Computation*, 219(18), 9652–9669. [DOI: 10.1016/j.amc.2013.03.002](https://doi.org/10.1016/j.amc.2013.03.002)
 
-### **NSGA-II**
+### **NSGA**
 
 - Deb, K., Pratap, A., Agarwal, S., & Meyarivan, T. (2002). "A fast and elitist multiobjective genetic algorithm: NSGA-II." *IEEE Transactions on Evolutionary Computation*, 6(2), 182–197. [DOI: 10.1109/4235.996017](https://doi.org/10.1109/4235.996017)
 
