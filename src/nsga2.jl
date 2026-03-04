@@ -13,6 +13,7 @@ Runs the NSGA-II evolutionary algorithm on the given optimization model.
 - `(pareto_front::Vector{SolutionNSGA}, report)`: Final Pareto front and performance report.
 """
 function nsga2(model::Model; kwargs...)
+    @warn("Still not ready")
     user_options = Dict(kwargs) 
     options = nsga2_options(user_options, model)
 

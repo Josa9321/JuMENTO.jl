@@ -22,7 +22,7 @@ include("augmecon.jl")
 include("nsga2_options.jl")
 include("nsga2.jl")
 
-include("Metrics.jl")
+include("Metrics/Metrics.jl")
 include("Plots/MultiPlots.jl")
 
 include("utils.jl")

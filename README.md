@@ -25,13 +25,15 @@ It integrates seamlessly with [JuMP](https://jump.dev/) models and provides:
 - [Installation](#installation)
 - [How to Use](#how-to-use)
   - [1. Build a Model](#1-build-a-model)
-  - [2. Configure User Options for AUGMECON and AUGMECON 2](#2-configure-user-options-for-augmecon-and-augmecon-2)
-  - [3. Solve with AUGMECON](#3-solve-with-augmecon)
-  - [4. Configure User Options for NSGA-II](#4-configure-user-options-for-nsga-ii)
-  - [5. Solve with NSGA-II](#5-solve-with-nsga-ii)
-  - [6. Plot Results](#6-plot-results)
-  - [7. Save Results](#7-save-results)
-- [Metrics for Evaluation](#-metrics-for-evaluation)
+  - [2. Augmented ε-Constraint Method (AUGMECON)](#2-augmented-ε-constraint-method-augmecon)
+      - [2.1. Configure User Options for AUGMECON](#21-configure-user-options-for-augmecon)
+      - [2.2. Solve with AUGMECON](#22-solve-with-augmecon)
+  - [3. NSGA-II](#3-nsga-ii)
+      - [3.1. Configure User Options for NSGA-II](#31-configure-user-options-for-nsga-ii)
+      - [3.2. Solve with NSGA-II](#32-solve-with-nsga-ii)
+  - [4. Evaluation Frontiers](#4-evaluation-frontiers)
+      - [4.1. Plot Results](#41-plot-results)
+      - [4.2. Metrics for Evaluation](#42-metrics-for-evaluation)
 - [Example Problems](#-example-problems)
 - [References](#-references)
 
@@ -50,9 +52,8 @@ Pkg.add(url="https://github.com/Josa9321/JuMENTO.jl")
 
 ## **How to Use**
 
-### **1. Build a Model**
-
-First, declare a **JuMP** model to use AUGMECON, AUGMECON2, or NSGA-II (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/)).
+### 1. Build a Model
+To solve problems with JuMENTO, you must first define a **JuMP** model (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/)).
 Below is an example showing how to build a model for use with JuMENTO:
 
 ```julia
@@ -70,9 +71,10 @@ end
 @objective(model, Max, [x[1],  3*x[1] + 4*x[2]])
 ```
 
-Note that the objective sense must be specified when using the `@objective` macro. In the JuMENTO package, this sense is applied to the entire objective vector. To set the sense for each objective individually, pass the `objective_sense_set` option when calling `augmecon` (see [section 2](#2-configure-user-options-for-augmecon-and-augmecon-2)).
+Note that the objective sense must be specified when using the `@objective` macro. In JuMENTO, this sense is applied to the entire objective vector. To define the sense of each objective individually, pass the `objective_sense_set`
+option when calling `augmecon` (see Section 2.1.).
 
-Alternatively, you can declare the objectives as JuMP variables and assign their values with equality constraints.
+Alternatively, you may declare the objectives as JuMP variables and assign their values using equality constraints:
 
 ```julia
 model = Model(HiGHS.Optimizer)
@@ -92,25 +94,33 @@ end
 end
 ```
 
+As mentioned earlier, the objective sense for each objective can be set individually by passing the `objective_sense_set` option when calling `augmecon`.
+
 ---
 
-### **2. Configure User Options for AUGMECON and AUGMECON 2**
+### 2. Augmented ε-Constraint Method (AUGMECON)
+
+The AUGMECON method is an exact approach that generates the Pareto frontier by solving a series of single-objective optimization problems. It is based on the ε-constraint method, which transforms a multi-objective problem into a single-objective one by treating all but one objective as constraints with specified bounds (ε values). 
+
+For more details on the method, please refer to the original paper by Mavrotas (2009) and its improved version by Mavrotas and Florios (2013).
+
+#### 2.1. Configure User Options for AUGMECON
 
 When using an AUGMECON-based method, you can control its behavior by passing keyword options to `augmecon`. Some options are required; others are optional. The table below summarizes the available parameters:
+
 
 | Parameter               | Description                                                           | Default       |
 | ----------------------- | --------------------------------------------------------------------- | ------------- |
 | `grid_points`         | Number of grid divisions for ε-constraint                            | Required      |
-| `nadir`               | Nadir point for normalization                                         | Auto computed |
+| `nadir`               | Nadir point                                                           | Auto computed |
 | `objective_sense_set` | Objective sense for each objective (:Min or :Max)                     | [:Max ...]    |
 | `penalty`             | Numeric value that is used by the AUGMECON                            | 1e-3          |
 | `bypass`              | Used to know whether or not AUGMECON 2 will be used                   | true          |
 | `dominance_eps`       | Tolerance used when determining dominance relations between solutions | 1e-8          |
 | `print_level`         | Logging detail (0 or 1)                                               | 0             |
 
----
 
-### **3. Solve with AUGMECON**
+#### 2.2. Solve with AUGMECON
 
 Solve the model above with the `augmecon` function. The call returns the Pareto frontier (a `Vector{SolutionJuMP}`) and a report with method diagnostics.
 
@@ -118,7 +128,7 @@ Solve the model above with the `augmecon` function. The call returns the Pareto 
 frontier, report = augmecon(model, grid_points=10)
 ```
 
-If the objectives were declared as JuMP variables, call:
+If the objectives were declared as JuMP variables in a `objs` vector, call:
 
 ```julia
 frontier, report = augmecon(model, objs, grid_points=10)
@@ -126,7 +136,13 @@ frontier, report = augmecon(model, objs, grid_points=10)
 
 ---
 
-### **4. Configure User Options for NSGA-II**
+### 3. NSGA-II
+
+**WARNING: NSGA-II is not properly implemented yet. Use with caution.**
+
+NSGA-II is a popular metaheuristic algorithm for solving multi-objective optimization problems. It is based on the concept of non-dominated sorting and uses a fast elitist approach to maintain a diverse set of solutions. The algorithm iteratively evolves a population of candidate solutions through selection, crossover, and mutation operations, aiming to approximate the Pareto frontier.
+
+#### 3.1. Configure User Options for NSGA-II
 
 To use AUGMECON, the user can provide some additional information that will be taken into account when making a decision. Below are some of the details:
 
@@ -151,9 +167,7 @@ To use AUGMECON, the user can provide some additional information that will be t
 
 *NOTE*: The default_range value is necessary when no upper bounds are established for a variable. Therefore, a float value is used to determine a possible range. It's also important to note that a very large default_range value can cause the number of generations required to reach a viable solution to take a long time.
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-### **5. Solve with NSGA-II**
+#### 3.2. Solve with NSGA-II
 
 To use NSGA-II, you need to call it with two objects that will store the results. For options, you need to add a ";" after the model. Below is an example:
 
@@ -163,71 +177,68 @@ frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:quadratic)
 
 ---
 
-### **6. Plot results**
+### 4. Evaluating Frontiers
 
-If you want to plot the results found, the following function can be called:
+To evaluate the quality of the obtained Pareto frontiers, you can use the plotting and metrics tools provided by JuMENTO. These tools allow you to visualize the trade-offs between objectives and quantitatively assess the performance of different algorithms.
 
-```julia
-plot_result(frontier, model)
-```
+Its important to clarify that the methods implemented here assume the frontier set $F$ is a $m × n$ matrix, where each of the $m$ rows corresponds to an specific objective, and each of the $n$ solutions is represented by a column.
 
-Here is an example of how the plot will look:
+#### 4.1. Plot Results
 
-![Plot_of_results]["images/Plots.png"]
-
-*NOTE*: This function plots both the Pareto frontier and the variables.
-
----
-
-### **7. Save results**
-
-You may be saving the results of the frontier and the report, with an existing function in JuMENTO, but it is necessary to also pass a location where the files will be downloaded. The function follows:
+There are a variety of plotting functions available in the `JuMENTO.MultiPlots` module that can be used to visualize the Pareto frontiers. The options implemented are:
+ - Scatter plots: ;
+ - Parallel coordinate plots;
+ - Radar plots for few solutions;
+ - Level diagrams.
 
 ```julia
-save_results_to_file(frontier, report, "User/<username>/Download") # Here the "Download" folder was used as an example
 ```
 
----
+#### 4.2. Metrics for Evaluation
 
-## **Metrics for Evaluation**
+**WARNING: hypervolume metric is still in development, and may be slow to calculate for frontiers with lots of objetives**
 
-To compare the performance of different algorithms, specific multi-objective metrics are used to assess the quality of the solution sets obtained. This assessment typically considers aspects such as the dispersion of solutions, their distance from the Pareto frontier, or the number of solutions generated.
+To compare the performance of different algorithms, specific multiobjective metrics are used to assess the quality of the solution sets obtained. This assessment typically considers aspects such as the dispersion of solutions and their distance from the Pareto frontier.
 
 The JuMENTO repository includes the implementation of common multi-objective metrics:
 
 - **Spacing (SP)**
-Measures the dispersion of the solutions in a set with respect to a reference frontier.
+  Measures the variation in distances between each solution in the evaluated set and its nearest neighbor in the reference set. Smaller values are desirable.
 - **Generalized Distance (GD)**
-  Calculates the average distance of each solution in the set to the closest solution on a reference frontier.
+  Calculates the p-norm of euclidean distances from each solution in the evaluated set to its nearest neighbor in the reference set. Smaller values indicate that the evaluated set is closer to the reference set, which is desirable.
 - **Diversity (Δ)**
-  Measures how well the solutions are distributed across the objective space.
+  Measures the dispersion of the solution set. Smaller values indicate better performance.
 - **Hypervolume (HV)**
-  Quantifies both diversity and convergence by measuring the volume of the objective space dominated by the solution set, relative to a reference (nadir) point.
+  Computes the hypervolume of the objective space dominated by the solution set bounded by a reference point. Larger values indicate better performance.
 - **Error Ratio (ER)**
-  Indicates the proportion of solutions in the set that are not present in the reference set.
+  Computes the proportion of solutions in the evaluated set that are not present in the reference set. Smaller values indicate better performance.
 - **Error Metrics (ME, VE, MPE)**
-  Accuracy evaluation.
+  Computes a collection of error-based metrics - that is, mean return error, variance return error, mean percentage error - to assess the quality of the solution set. Smaller values for each of these metrics indicate better performance.
 
 The metrics can be applied by calling their respective functions, as shown below:
 
 ```julia
-sp = spacing_metric(frontier)
-gd = general_distance(frontier, reference)
-dm = diversity_metric(frontier, reference)
-hv = hypervolume(frontier, [200.0, 100.0])
-er = error_ratio(frontier, reference)
-me, ve, mpe = calculate_error_metrics(frontier, reference)
+using JuMENTO: Metrics
+
+frontier_set = [3 6 9; 15 9 4.0]
+reference_set = [1 2 3 4 5 6 7 8 9 10; 10 9 8 7 6 5 4 3 2 1.0]
+nadir = [10.1, 15.15]
+
+sp = Metrics.spacing_metric(frontier_set, reference_set)
+# 2.0126831744720173
+
+gd = Metrics.general_distance(frontier_set, reference_set)
+# 2.0816659994661326
+
+dm = Metrics.diversity_metric(frontier_set, reference_set)
+# 0.39696030366206303
+
+er = Metrics.error_ratio(frontier_set, reference_set)
+# 1.0
+
+hv = Metrics.hypervolume(frontier_set, nadir)
+# 31.165
 ```
-
-<!-- Its also possible to print the functions on screen by 
-
-```julia
-test_with_get(frontier, reference, [200.0, 150.0])
-```
-
-The results will be displayed as follows:
-
-![Metrics](image/Metrics.png) -->
 
 ---
 
