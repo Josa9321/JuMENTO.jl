@@ -5,23 +5,17 @@ A `ReportAUG` struct represents a report of the solution obtained through the AU
 It holds the following attributes:
 - `counter::Dict{String, F}`: A dictionary containing the number of iterations, the total time spent in the solver and the total time spent in the table solver.
 - 'has_nadir_ideal::B': A boolean value indicating whether the solver has found viables solutions to define nadir and ideal points.
-- `table_gap::Vector{F}`: A vector storing the gap of the payoff table in each iteration.
-- `gap::Vector{F}`: A vector storing the gap of the solver in each iteration.
 - `table::Matrix{F}`: A matrix storing the values of the payoff table.
 """
 mutable struct ReportAUG{F<:AbstractFloat,B<:Integer}
     counter::Dict{String,F}
     has_nadir_ideal::B
-    table_gap::Vector{F}
-    gap::Vector{F}
     table::Matrix{F}
 
     ReportAUG(num_objectives) = new{Float64,Bool}(
         Dict{String,Float64}("iterations" => 0.0, "solve_time" => 0.0, "table_solve_time" => 0.0,
             "has_viable_nadir_ideal" => true),
         true,
-        Float64[],
-        Float64[],
         zeros(num_objectives, num_objectives)
     )
 end
