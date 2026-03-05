@@ -252,7 +252,7 @@ v1 = [92.0 50.0 2.0 7.0 91.0; 20.0 91.0 100.0 97.0 81.0]
 v2 = [10 45 81 91 93; 99 94 91 81 30]
 v3 = [100.0 88.0 98.0 95.0; 80.0 100.0 89.0 99.0]
 
-cats = ["Cost", "Quality"] # Optional, default is "f_1", "f_2"...
+cats = ["Profit", "Quality"] # Optional, default is "f_1", "f_2"...
 names = ["NSGA-2", "NSGA-3", "AUGMECON-2"] # Optional, default is "Method 1", "Method 2"...
 
 fig = MultiPlots.scatter([v1, v2, v3], categories=cats, name_set=names)
@@ -267,7 +267,7 @@ The resulting figure would look like this:
 ```julia
 using JuMENTO
 
-cats = ["Profit", "Quality", "Public Reception"]
+cats = ["Profit", "Quality", "Costs"]
 names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
 
 sens = [:max, :max, :min]
