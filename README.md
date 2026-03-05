@@ -201,20 +201,24 @@ To further explore the plotting capabilities, you can check the documentation of
 using JuMENTO
 
 frontier_set = [
-    7 4 2 6;
-    10 5 10 7;
-    4 10 21 13
+    7 4 2;
+    10 5 10;
+    4 10 21
 ]
-frontier_normalized = normalize_frontier(frontier_set, [:min, :max, :min])
-name_set = ["Product A", "Product B", "Product C", "Product D"]
 
-cats = ["Cost", "Quality", "Time"]
-fig = MultiPlots.radar(frontier_normalized, categories=cats, name_set=name_set)
+name_set = ["Product A", "Product B", "Product C"] # Optional, default is "Solution 1", "Solution 2", ...
+cats = ["Cost", "Quality", "Time"] # Optional, default is "Objective 1", "Objective 2", ...
+sens= [:min, :max, :min] # Optional, default is `:max` for all objectives
+eps=0.2 # Optional, default is 0.2. This value is used to expand slightly the normalization range to improve visualization
+
+fig = MultiPlots.radar(frontier_set, sense_set = sens, categories=cats, name_set=name_set, eps=eps)
 ```
 
 For this frontier, the figure would look like this:
 
 ![Radar Chart](images/radar_chart.png)
+
+This visualization enables quantitative evaluation of product performance profiles. For instance, Product C occupies a dominant position regarding Quality and Cost; however, it exhibits significantly higher latency (Time), representing a clear trade-off in the objective space.
 
 #### Parallel Coordinate Plots
 
