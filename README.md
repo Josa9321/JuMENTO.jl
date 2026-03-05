@@ -6,6 +6,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Julia](https://img.shields.io/badge/julia-v1.8+-blue.svg)](https://julialang.org/)
+[![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 JuMENTO is a Julia-based framework for **multi-objective optimization**, implementing two widely used families of methods:
 

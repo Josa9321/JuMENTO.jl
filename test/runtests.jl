@@ -1,9 +1,12 @@
-using JuMENTO, Test
+using JuMENTO
+using Test, Aqua
 
 include("metric_tests.jl")
 include("simple_models.jl")
 include("test_simple_models.jl")
 include("mokp//mokp.jl")
+
+Aqua.test_all(JuMENTO)
 
 @testset "JuMENTO.jl" begin
     @testset "Test Metrics" begin
