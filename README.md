@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://github.com/Josa9321/Jumento.jl/blob/main/Jumento.png" alt="Logo" width="250">
+<img src="https://github.com/Josa9321/JuMENTO.jl/blob/main/images/Jumento.png" alt="Logo" width="250">
 </div>
 
 # **JuMENTO: Multi-Objective Optimization in Julia**
