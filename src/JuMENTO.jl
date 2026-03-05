@@ -3,7 +3,7 @@ module JuMENTO
 using JuMP, Printf, LinearAlgebra, Statistics, Random
 import MathOptInterface as MOI
 
-export normalize_frontier, Metrics, MultiPlots, SolutionJuMP, ReportAUG, augmecon, nsga2
+export generate_pareto, normalize_frontier, Metrics, MultiPlots, SolutionJuMP, ReportAUG, augmecon, nsga2
 
 include("structs.jl")
 include("dominance_relations.jl")

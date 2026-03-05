@@ -1,5 +1,5 @@
 """
-    generate_pareto(solution_set{<:AbstractSolution}, efficiency_eps)
+    generate_pareto_max(solution_set{<:AbstractSolution}, efficiency_eps)
 
 Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions
 
@@ -10,7 +10,7 @@ Extract the non-dominated solution set from the given solution set by filtering 
 # Returns
 - `pareto_set`: A vector containing the solutions that compose the Pareto set.
 """
-function generate_pareto(solution_set::Vector{S}, efficiency_eps::Float64) where S <: AbstractSolution
+function generate_pareto_max(solution_set::Vector{S}, efficiency_eps::Float64) where S <: AbstractSolution
 
     if length(solution_set) == 0 
         print("The solution set is empty.\n")
@@ -28,7 +28,24 @@ function generate_pareto(solution_set::Vector{S}, efficiency_eps::Float64) where
 end
 
 """
-    generate_pareto(solution_set::Matrix{<:Number}, efficiency_eps)
+    generate_pareto(solution_set::Matrix{F}, efficiency_eps; sense_set) where F <: Number
+
+Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions, considering the sense of each objective.
+"""
+function generate_pareto(solution_set::Matrix{F}, efficiency_eps::Float64=1e-6; sense_set=fill(:max, size(solution_set, 1))) where F <: Number
+    @assert size(solution_set, 1) == length(sense_set) "The length of the sense vector must match the number of objectives (rows) in the solution set."
+    @assert all(s -> s == :max || s == :min, sense_set) "Sense vector must contain only :max or :min values."
+
+    to_maximize_set = copy(solution_set)
+    __convert_to_maximize!(to_maximize_set, sense_set)
+
+    pareto_set = generate_pareto_max(to_maximize_set, efficiency_eps)
+    __convert_to_maximize!(pareto_set, sense_set)
+    return pareto_set
+end
+
+"""
+    generate_pareto_max(solution_set::Matrix{<:Number}, efficiency_eps)
 
 Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions.
 
@@ -39,7 +56,7 @@ Extract the non-dominated solution set from the given solution set by filtering 
 # Returns
 - `pareto_set`: A vector containing the solutions that compose the Pareto set.
 """
-function generate_pareto(solution_set::Matrix{F}, efficiency_eps::Float64) where F <: Number
+function generate_pareto_max(solution_set::Matrix{F}, efficiency_eps::Float64) where F <: Number
 
     if size(solution_set, 2) == 0
         print("The solution set is empty.\n")
@@ -60,6 +77,23 @@ end
 ###################
 # Intra functions #
 ###################
+
+function __convert_to_maximize!(solution_set, sense_set)
+    for i in axes(sense_set, 1)
+        if sense_set[i] == :min
+            __convert_line_maximize!(solution_set, i)
+        end
+    end
+    return solution_set
+end
+
+function __convert_line_maximize!(solution_set, i)
+    for j in axes(solution_set, 2)
+        solution_set[i, j] = -solution_set[i, j]
+    end
+    return solution_set
+end
+
 
 """
     __is_efficient(solution::SolutionJuMP, solution_set, error)

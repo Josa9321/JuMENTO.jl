@@ -246,18 +246,14 @@ The resulting figure would look like this:
 #### Scatter Plots
 
 ```julia
-using JuMENTO, Random
+using JuMENTO
 
-Random.seed!(1)
+v1 = [92.0 50.0 2.0 7.0 91.0; 20.0 91.0 100.0 97.0 81.0]
+v2 = [10 45 81 91 93; 99 94 91 81 30]
+v3 = [100.0 88.0 98.0 95.0; 80.0 100.0 89.0 99.0]
 
-m=2
-
-v1 = JuMENTO.generate_pareto(rand(1:100.0, m, 30), 1e-6)
-v2 = JuMENTO.generate_pareto(rand(1:100.0, m, 24), 1e-6)
-v3 = JuMENTO.generate_pareto(rand(1:100.0, m, 100), 1e-6)
-
-cats = ["Profit", "Quality"]
-names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
+cats = ["Cost", "Quality"] # Optional, default is "f_1", "f_2"...
+names = ["NSGA-2", "NSGA-3", "AUGMECON-2"] # Optional, default is "Method 1", "Method 2"...
 
 fig = MultiPlots.scatter([v1, v2, v3], categories=cats, name_set=names)
 ```

@@ -115,7 +115,7 @@ function _run_augmecon(model::Model, objectives::Vector{VariableRef}, options)
     println_if_necessary("Execution completed\n", options)
 
     __convert_table_to_correct_sense!(augmecon_model)
-    frontier = generate_pareto(frontier, options[:dominance_eps])
+    frontier = generate_pareto_max(frontier, options[:dominance_eps])
     __reset_augmecon_model!(model)
     return frontier, solve_report
 end

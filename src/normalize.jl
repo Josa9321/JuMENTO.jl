@@ -1,3 +1,15 @@
+"""
+    normalize_frontier(frontier_set::Matrix{F}, sense=fill(:max, size(frontier_set, 1));
+        eps=0.0,
+        min_point = minimum(frontier_set, dims=2) .* (1.0 - eps),
+        max_point = maximum(frontier_set, dims=2) .* (1.0 + eps)
+    ) where F <: Number
+
+Normalizes the given frontier set to a [0, 1] range for each objective.
+The `sense` vector indicates whether each objective is to be maximized or minimized, which affects the normalization.
+The `eps` parameter allows for a slight expansion of the normalization range if necessary.
+The `min_point` and `max_point` parameters can be explicitly provided to control the normalization range, or they will be computed from the frontier set.
+"""
 function normalize_frontier(frontier_set::Matrix{F}, sense=fill(:max, size(frontier_set, 1));
         eps=0.0,
         min_point = minimum(frontier_set, dims=2) .* (1.0 - eps),

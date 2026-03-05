@@ -1,6 +1,7 @@
 using JuMENTO
 using Test, Aqua
 
+include("test_utils.jl")
 include("metric_tests.jl")
 include("simple_models.jl")
 include("test_simple_models.jl")
@@ -9,6 +10,12 @@ include("mokp//mokp.jl")
 Aqua.test_all(JuMENTO)
 
 @testset "JuMENTO.jl" begin
+    @testset "Test Utils" begin
+        test_normalization()
+        test_dominance_relations()
+        test_generate_pareto_frontier()
+    end
+
     @testset "Test Metrics" begin
         test_multiobjective_metrics()
     end
