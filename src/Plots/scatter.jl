@@ -26,7 +26,7 @@ Behavior:
   a matrix of pairwise 2D scatter plots is generated to visualize the
   relationships between objectives.
 """
-function scatter_mo(set_of_frontiers::Vector{Matrix{F}};
+function scatter(set_of_frontiers::Vector{Matrix{F}};
     categories::Vector{String}=["f_$(i)" for i in axes(set_of_frontiers, 1)],
     name_set::Vector{String}=["Method $(k)" for k in eachindex(set_of_frontiers)],
     is_3d::Bool=false, type_plot::String="markers+lines") where {F<:Number}
@@ -71,7 +71,7 @@ Behavior:
   a matrix of pairwise 2D scatter plots is generated to visualize the
   relationships between objectives.
 """
-function scatter_mo(frontier_set::Matrix{F}; categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)],
+function scatter(frontier_set::Matrix{F}; categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)],
     is_3d::Bool=false, name::String="Method", type_plot::String="markers+lines") where {F<:Number}
     fig = nothing
     if size(frontier_set, 1) == 2
@@ -109,7 +109,7 @@ function __2d_scatter!(fig, frontier_set::Matrix{F}, type_plot::String, name::St
     x = view(frontier_set, 1, :)
     order = sortperm(x)
     add_trace!(fig,
-        scatter(
+        PlotlyJS.scatter(
             x=view(frontier_set, 1, order),
             y=view(frontier_set, 2, order),
             mode=type_plot,
@@ -121,7 +121,7 @@ end
 
 function __3d_scatter(frontier_set::Matrix{F}, categories, type_plot, name) where {F<:Number}
     fig = plot(
-        scatter(
+        PlotlyJS.scatter(
             x=frontier_set[1, :],
             y=frontier_set[2, :],
             z=frontier_set[3, :],
@@ -166,7 +166,7 @@ function __nd_scatter!(fig, frontier_set::Matrix{F}, type_plot, name, id) where 
             color = COLORS_SET[mod1(id, length(COLORS_SET))]
             add_trace!(
                 fig,
-                scatter(
+                PlotlyJS.scatter(
                     x=frontier_set[i_1, order],
                     y=frontier_set[i_2, order],
                     mode=type_plot,

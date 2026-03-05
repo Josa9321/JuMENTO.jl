@@ -124,7 +124,7 @@ function __level_diagrams!(fig, frontier_set::Matrix{F}, normalized_set::Matrix{
         color = COLORS_SET[mod1(id, length(COLORS_SET))]
         add_trace!(
             fig,
-            scatter(
+            PlotlyJS.scatter(
                 x=frontier_set[i, order],
                 y=y[order],
                 mode=type_plot,

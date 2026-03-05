@@ -5,7 +5,7 @@
 # **JuMENTO: Multi-Objective Optimization in Julia**
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Julia](https://img.shields.io/badge/julia-v1.8+-blue.svg)](https://julialang.org/)
+[![Julia](https://img.shields.io/badge/julia-v1.10+-blue.svg)](https://julialang.org/)
 [![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 JuMENTO is a Julia-based framework for **multi-objective optimization**, implementing two widely used families of methods:
@@ -213,6 +213,7 @@ fig = MultiPlots.radar(frontier_normalized, categories=cats, name_set=name_set)
 ```
 
 For this frontier, the figure would look like this:
+
 ![Radar Chart](images/radar_chart.png)
 
 #### Parallel Coordinate Plots
@@ -250,7 +251,7 @@ v3 = JuMENTO.generate_pareto(rand(1:100.0, m, 100), 1e-6)
 cats = ["Profit", "Quality"]
 names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
 
-fig = MultiPlots.scatter_mo([v1, v2, v3], categories=cats, name_set=names)
+fig = MultiPlots.scatter([v1, v2, v3], categories=cats, name_set=names)
 ```
 
 The resulting figure would look like this:
@@ -276,6 +277,7 @@ fig = MultiPlots.level_diagrams([v1, v2, v3], categories=cats, names_set=names)
 ```
 
 The resulting figure would look like this:
+
 ![Level Diagrams](images/level_diagrams.png)
 
 ### Metrics for Evaluation

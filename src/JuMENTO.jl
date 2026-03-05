@@ -1,12 +1,9 @@
 module JuMENTO
 
-using JuMP
+using JuMP, Printf, LinearAlgebra, Statistics, Random
 import MathOptInterface as MOI
 
-using Printf
-using LinearAlgebra
-using Statistics
-using Random
+export normalize_frontier, Metrics, MultiPlots, SolutionJuMP, ReportAUG, augmecon, nsga2
 
 include("structs.jl")
 include("dominance_relations.jl")
@@ -26,7 +23,5 @@ include("Metrics/Metrics.jl")
 include("Plots/MultiPlots.jl")
 
 include("utils.jl")
-
-export normalize_frontier, Metrics, MultiPlots, SolutionJuMP, ReportAUG, augmecon, nsga2
 
 end

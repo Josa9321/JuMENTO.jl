@@ -52,7 +52,9 @@ end
 """
     augmecon(model::Model; user_options...)
 
-Run augmecon on a JuMP model with multiple objectives defined in the model.
+This function is an overload of the `augmecon` function that allows users to call the method without explicitly providing the objectives as a vector of `VariableRef`. 
+Instead, it retrieves the objectives from the model and proceeds with the AUGMECON method.
+If the sense of the objectives is not provided in the options, it will be set according to the model's objective sense (maximization or minimization) for all objectives.
 """
 function augmecon(model::Model; user_options...)
     objectives = objective_function(model)

@@ -4,7 +4,7 @@
 Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions
 
 # Arguments
-- `solution_set`: A vector containing the solutions from which the Pareto set will be generated.
+- `solution_set`: A vector containing the solutions from which the Pareto set will be generated. It considers that all objectives are to be maximized.
 - `efficiency_eps::Float64`: A float value indicating the error tolerance for the comparison.
 
 # Returns
@@ -30,10 +30,10 @@ end
 """
     generate_pareto(solution_set::Matrix{<:Number}, efficiency_eps)
 
-Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions
+Extract the non-dominated solution set from the given solution set by filtering out duplicate objective vectors and removing all dominated solutions.
 
 # Arguments
-- `solution_set`: A `m × n` matrix containing the `n` solutions from which the Pareto set will be generated.
+- `solution_set`: A `m × n` matrix containing the `n` solutions from which the Pareto set will be generated. It considers that all objectives are to be maximized.
 - `efficiency_eps::Float64`: A float value indicating the error tolerance for the comparison.
 
 # Returns
