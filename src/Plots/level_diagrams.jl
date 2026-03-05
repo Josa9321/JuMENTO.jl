@@ -1,6 +1,6 @@
 """
     level_diagrams(set_of_frontiers::Vector{Matrix{F}};
-        normalized_set_of_frontiers=__normalize_sets(set_of_frontiers),
+        sense_set=fill(:max, size(set_of_frontiers[1], 1)),
         categories::Vector{String}=["f_\$(i)" for i in axes(set_of_frontiers[1], 1)],
         name_set::Vector{String}=["Method \$(k)" for k in eachindex(set_of_frontiers)],
         type_plot::String="markers+lines",
@@ -17,10 +17,7 @@ For each objective, a subplot is generated in which:
   computed using the `p`-norm.
 
 Arguments:
-- `normalized_set_of_frontiers` is the normalized version of the frontiers.
-  If not explicitly provided, the function normalizes the sets using a
-  common minimum and maximum point across all frontiers to ensure
-  comparability, assuming maximization objectives.
+- `sense_set` indicates whether each objective is to be maximized or minimized.
 - `categories` defines the labels for each objective.
 - `name_set` defines the labels for each frontier (e.g., different methods).
 - `type_plot` specifies the scatter style (e.g., `"markers"`, `"lines"`,
@@ -31,7 +28,7 @@ Level diagrams are useful for simultaneously analyzing convergence
 (distance to the ideal point) and distribution along each objective.
 """
 function level_diagrams(set_of_frontiers::Vector{Matrix{F}};
-    normalized_set_of_frontiers=__normalize_sets(set_of_frontiers),
+    sense_set=fill(:max, size(set_of_frontiers[1], 1)),
     categories::Vector{String}=["f_$(i)" for i in axes(set_of_frontiers[1], 1)],
     name_set::Vector{String}=["Method $(k)" for k in eachindex(set_of_frontiers)],
     type_plot::String="markers+lines",
@@ -44,6 +41,8 @@ function level_diagrams(set_of_frontiers::Vector{Matrix{F}};
         rows=m,
         subplot_titles=categories[:, :]
     )
+
+    normalized_set_of_frontiers = __normalize_sets(set_of_frontiers, sense_set)
     for (idx, set) in enumerate(set_of_frontiers)
         __level_diagrams!(fig, set, normalized_set_of_frontiers[idx], type_plot, name_set[idx], idx)
     end
@@ -52,7 +51,7 @@ end
 
 """
     level_diagrams(frontier_set::Matrix{F};
-        normalized_set = normalize_frontier(frontier_set),
+        sense_set=fill(:max, size(frontier_set, 1)),
         categories::Vector{String} = ["f_\$(i)" for i in axes(frontier_set, 1)],
         name::String = "Method",
         type_plot::String = "markers+lines",
@@ -82,7 +81,7 @@ Level diagrams provide a visual assessment of both convergence
 (distance to the ideal point) and distribution along each objective.
 """
 function level_diagrams(frontier_set::Matrix{F};
-    normalized_set=normalize_frontier(frontier_set),
+    sense_set=fill(:max, size(frontier_set, 1)),
     categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)],
     name::String="Method",
     type_plot::String="markers+lines",
@@ -94,16 +93,18 @@ function level_diagrams(frontier_set::Matrix{F};
         rows=m,
         subplot_titles=categories[:, :]
     )
+
+    normalized_set = normalize_frontier(frontier_set, sense_set)
     __level_diagrams!(fig, frontier_set, normalized_set, type_plot, name, 1)
     return fig
 end
 
-function __normalize_sets(set_of_frontiers)
+function __normalize_sets(set_of_frontiers, sense_set)
     minimum_point = minimum(hcat(minimum.(set_of_frontiers, dims=2)...), dims=2)
     maximum_point = maximum(hcat(maximum.(set_of_frontiers, dims=2)...), dims=2)
     result = Vector{typeof(set_of_frontiers[1])}(undef, length(set_of_frontiers))
     for (k, set) in enumerate(set_of_frontiers)
-        result[k] = normalize_frontier(set, min_point=minimum_point, max_point = maximum_point)
+        result[k] = normalize_frontier(set, sense_set, min_point=minimum_point, max_point=maximum_point)
     end
     return result
 end

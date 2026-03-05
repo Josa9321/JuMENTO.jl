@@ -265,19 +265,18 @@ The resulting figure would look like this:
 #### Level Diagrams
 
 ```julia
-using JuMENTO, Random
-
-Random.seed!(1)
-
-m=3
+using JuMENTO
 
 cats = ["Profit", "Quality", "Public Reception"]
 names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
 
-v1 = JuMENTO.generate_pareto(rand(1:100.0, m, 30), 1e-6)
-v2 = JuMENTO.generate_pareto(rand(1:100.0, m, 24), 1e-6)
-v3 = JuMENTO.generate_pareto(rand(1:100.0, m, 100), 1e-6)
-fig = MultiPlots.level_diagrams([v1, v2, v3], categories=cats, names_set=names)
+sens = [:max, :max, :min]
+
+v1 = [63.0 62.0 87.0 20.0 100.0 78.0 92.0 99.0; 92.0 20.0 87.0 44.0 66.0 64.0 100.0 80.0; 20.0 2.0 74.0 2.0 43.0 12.0 80.0 36.0]
+v2 = [42.0 99.0 78.0 67.0 85.0 4.0 40.0 93.0; 98.0 17.0 5.0 19.0 90.0 82.0 80.0 73.0; 84.0 72.0 8.0 15.0 16.0 12.0 10.0 80.0]
+v3 = [92.0 93.0 89.0 86.0 95.0 93.0 10.0 12.0 73.0 99.0; 63.0 9.0 46.0 99.0 99.0 87.0 47.0 58.0 1.0 94.0; 18.0 28.0 15.0 4.0 98.0 76.0 1.0 3.0 3.0 85.0]
+
+fig = MultiPlots.level_diagrams([v1, v2, v3], categories=cats, sense_set=sens, name_set=names)
 ```
 
 The resulting figure would look like this:
