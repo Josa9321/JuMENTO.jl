@@ -185,15 +185,16 @@ To evaluate the quality of the obtained Pareto frontiers, you can use the plotti
 Its important to clarify that the methods implemented here assume the frontier set $F$ is a $m × n$ matrix, where each of the $m$ rows corresponds to an specific objective, and each of the $n$ solutions is represented by a column.
 
 ### Plot Results
+This module leverages `PlotlyJS.jl` to generate interactive visualizations of Pareto frontiers.
 
-There are a variety of plotting functions available in the `JuMENTO.MultiPlots` module that can be used to visualize the Pareto frontiers. The options implemented are:
- - Scatter plots;
+The `JuMENTO.MultiPlots` module provides a suite of plotting functions designed to analyze objective space trade-offs. The implemented visualization types include:
+ - Scatter plots (2 to 3 objectives);
  - Parallel coordinate plots;
- - Radar charts;
+ - Radar charts (Spider plots);
  - Level diagrams.
 
 The following sections show how to use some of the plotting functions defined in the `JuMENTO.MultiPlots` module.
-To further explore the plotting capabilities, you can check the documentation of each plotting function.
+For a comprehensive technical overview of specific parameters, please refer to the internal documentation for each function.
 
 #### Radar Charts
 
@@ -230,14 +231,17 @@ frontier_set = [
     10 9 8 7 6 5 4 3 2 1;
     4 10 21 4 21 23 4 2 9 10
 ]
-cats = ["Cost", "Quality", "Time"]
-fig = MultiPlots.parallel_coordinates(frontier_set, categories=cats)
+
+cats = ["Profit", "Quality", "Time"] # Optional, default is f_1, f_2 ...
+sens = [:max, :max, :min] # Optional, default is :max for every objective
+names = ["Product $j" for j in axes(frontier_set, 2)] # Optional, default is 'Solution 1', 'Solution 2' ...
+
+fig = MultiPlots.parallel_coordinates(frontier_set, categories=cats, sense_set=sens, name_set=names)
 ```
 
 The resulting figure would look like this:
 
 ![Parallel Coordinate Plot](images/parallel_coordinates.png)
-
 
 #### Scatter Plots
 
