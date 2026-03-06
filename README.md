@@ -301,8 +301,6 @@ The JuMENTO repository includes the implementation of common multi-objective met
   Computes the hypervolume of the objective space dominated by the solution set bounded by a reference point. Larger values indicate better performance.
 - **Error Ratio (ER)**
   Computes the proportion of solutions in the evaluated set that are not present in the reference set. Smaller values indicate better performance.
-- **Error Metrics (ME, VE, MPE)**
-  Computes a collection of error-based metrics - that is, mean return error, variance return error, mean percentage error - to assess the quality of the solution set. Smaller values for each of these metrics indicate better performance.
 
 The metrics can be applied by calling their respective functions, as shown below:
 

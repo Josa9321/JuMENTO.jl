@@ -12,7 +12,7 @@ function test_multiobjective_metrics()
     frontier_eq = [10.0 20.0; 100.0 80.0]
     reference_eq = [10.0 20.0; 100.0 80.0]
     nadir_eq = [25.0, 120.0]
-    results_eq = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 400.0]
+    results_eq = [0.0, 0.0, 0.0, 0.0, 400.0]
     test_all_metrics(frontier_eq, reference_eq; results=results_eq, nadir=nadir_eq)
 
     ###################################################
@@ -22,7 +22,7 @@ function test_multiobjective_metrics()
     frontier_hm = [3 6 9; 15 9 4.0]
     reference_hm = [1 2 3 4 5 6 7 8 9 10; 10 9 8 7 6 5 4 3 2 1.0]
     nadir_hm = [10.1, 15.15]
-    results_hm = [2.0126831744720173, 2.0816659994661326, 0.39696030366206303, 0.0, 0.0, 0.0, 1.0, 31.165]
+    results_hm = [2.0126831744720173, 2.0816659994661326, 0.39696030366206303, 1.0, 31.165]
     test_all_metrics(frontier_hm, reference_hm; results=results_hm, nadir=nadir_hm)
 
     frontier_hm_test_error_ratio_1 = [1 2 3; 10 9 8.0]
@@ -85,18 +85,14 @@ function test_all_metrics(frontier_set, reference_set; results, nadir)
     sp = Metrics.spacing(frontier_set, reference_set)
     gd = Metrics.general_distance(frontier_set, reference_set)
     dm = Metrics.diversity(frontier_set, reference_set)
-    me, ve, mpe = Metrics.calculate_error_metrics(frontier_set, reference_set)
     er = Metrics.error_ratio(frontier_set, reference_set)
     hv = Metrics.hypervolume(frontier_set, nadir)
 
     @test isapprox(sp, results[1], atol=1e-6)
     @test isapprox(gd, results[2], atol=1e-6)
     @test isapprox(dm, results[3], atol=1e-6)
-    # @test isapprox(me, results[4], atol=1e-6)
-    # @test isapprox(ve, results[5], atol=1e-6)
-    # @test isapprox(mpe, results[6], atol=1e-6)
-    @test isapprox(er, results[7], atol=1e-6)
-    @test isapprox(hv, results[8], atol=1e-6)
+    @test isapprox(er, results[4], atol=1e-6)
+    @test isapprox(hv, results[5], atol=1e-6)
 
     return nothing
 end
