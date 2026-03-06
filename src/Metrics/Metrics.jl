@@ -21,11 +21,10 @@ module Metrics
 
 using LinearAlgebra, Statistics
 
-export diversity, error_ratio, calculate_error_metrics, general_distance, hypervolume, spacing
+export diversity, error_ratio, general_distance, hypervolume, spacing
 
 include("diversity.jl")
 include("error_ratio.jl")
-include("errors.jl")
 include("general_distance.jl")
 include("hypervolume.jl")
 include("spacing.jl")
