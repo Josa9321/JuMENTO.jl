@@ -1,22 +1,30 @@
 using JuMP, HiGHS
 
 function simple_biobjective_problem()
-    model = init_configured_model()
+    model = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
+    set_silent(model)
+
+    set_attribute(model, MOA.Algorithm(), Augmecon(10))
+
     @variables model begin
         x[1:2] >= 0
-    end 
+    end
 
     @constraints model begin
         c1, x[1] <= 20
         c2, x[2] <= 40
-        c3, 5*x[1] + 4*x[2] <= 200
+        c3, 5 * x[1] + 4 * x[2] <= 200
     end
-    @objective(model, Max, [x[1],  3*x[1] + 4*x[2]])
+    @objective(model, Max, [x[1], 3 * x[1] + 4 * x[2]])
     return model
 end
 
 function simple_triobjective_problem()
-    model = init_configured_model()
+    model = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
+    set_silent(model)
+
+    set_attribute(model, MOA.Algorithm(), Augmecon(10))
+
     @variables model begin
         LIGN >= 0
         LIGN1 >= 0
@@ -52,11 +60,4 @@ function simple_triobjective_problem()
         (OIL + NG)
     ])
     return model
-end
-
-function init_configured_model()
-    result = Model(HiGHS.Optimizer)
-    set_silent(result)
-    set_time_limit_sec(result, 60.0)
-    return result
 end

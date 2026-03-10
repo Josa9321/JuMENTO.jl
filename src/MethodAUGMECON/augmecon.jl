@@ -45,6 +45,10 @@ frontier, solve_report = augmecon(model, objs, grid_points = 10, objective_sense
 ```
 """
 function augmecon(model::Model, objectives::Vector{VariableRef}; user_options...)
+    Base.depwarn(
+        "Use the MethodAUGMECON module and implement the model following the MultiObjectiveAlgorithms interface.",
+        :augmecon
+    )
     options = augmecon_options(user_options, length(objectives)) 
     return _run_augmecon(model::Model, objectives::Vector{VariableRef}, options)
 end
@@ -57,6 +61,10 @@ Instead, it retrieves the objectives from the model and proceeds with the AUGMEC
 If the sense of the objectives is not provided in the options, it will be set according to the model's objective sense (maximization or minimization) for all objectives.
 """
 function augmecon(model::Model; user_options...)
+    Base.depwarn(
+        "Use the MethodAUGMECON module and implement the model following the MultiObjectiveAlgorithms interface.",
+        :augmecon
+    )
     objectives = objective_function(model)
     options = augmecon_options(user_options, length(objectives)) 
 
