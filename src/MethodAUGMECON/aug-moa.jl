@@ -11,6 +11,7 @@ function MOA.minimize_multiobjective!(
     if !(typeof(ranges_set) <: AbstractVector)
         return ranges_set, nothing
     end
+    __set_ideal_point!(model, ranges_set)
     constraints_set = __set_model(algorithm, inner, f, ranges_set)
     solutions = MOA.SolutionPoint[]
 
@@ -54,12 +55,21 @@ function __set_model(algorithm, inner, f, ranges_set)
     c_v0 = MOI.GreaterThan(0.0)
     s = MOI.add_variables(inner, m - 1)
     MOI.add_constraints(inner, s, [MOI.GreaterThan(0.0) for _ in Base.OneTo(m - 1)])
-    MOI.set(inner, MOI.ObjectiveFunction{typeof(objs_set[1])}(), objs_set[1] - algorithm.penalty * sum(
-        s[o-1] / (ranges_set[o][1] - ranges_set[o][end]) for o in 2:m))
+    objective_term = - algorithm.penalty * sum(
+        s[o-1] / (ranges_set[o][1] - ranges_set[o][end]) for o in 2:m)
+
+    MOI.set(inner, MOI.ObjectiveFunction{typeof(objs_set[1])}(), objs_set[1] + objective_term)
 
     constraints_set = MOI.add_constraints(inner, [objs_set[o] + s[o-1] for o in 2:m
         ], [MOI.EqualTo(ranges_set[o][1]) for o in 2:m])
     return constraints_set
+end
+
+function __set_ideal_point!(model, ranges_set)
+    for (o, range) in enumerate(ranges_set)
+        model.ideal_point[o] = range[end]
+    end
+    return
 end
 
 function __get_range(algorithm, model, inner, f)

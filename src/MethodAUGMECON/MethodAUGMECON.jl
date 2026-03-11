@@ -1,7 +1,7 @@
 module MethodAUGMECON
 
-import MathOptInterface as MOI
 import MultiObjectiveAlgorithms as MOA
+import MultiObjectiveAlgorithms: MOI
 
 include("moa-structs.jl")
 include("aug-moa.jl")
