@@ -19,7 +19,7 @@ function run_tests()
         test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), augmecon_type=aug_type)
         @testset "Test $(name)" begin
             test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), augmecon_type=aug_type)
-            # test_simple_problems(simple_triobjective_problem(), simple_triobjective_frontier(), augmecon_type=aug_type)
+            test_simple_problems(simple_triobjective_problem(), simple_triobjective_frontier(), augmecon_type=aug_type)
             test_biobjective_knapsack(augmecon_type=aug_type)
             test_infeasible(augmecon_type=aug_type)
             test_unbounded(augmecon_type=aug_type)
