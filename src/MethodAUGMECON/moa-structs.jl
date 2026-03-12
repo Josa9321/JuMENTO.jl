@@ -22,14 +22,14 @@ mutable struct Augmecon <: MOA.AbstractAlgorithm
     sense_set::Union{Vector{String}, Nothing}
     nadir::Union{Vector{Float64}, Nothing}
     penalty::Float64
-    bypass::Bool
+    augmecon_type::Int64
     print_level::Int
     atol::Float64
 
     function Augmecon(grid_points::Int64; sense_set::Union{Vector{String}, Nothing}=nothing,
-            nadir::Union{Vector{Float64}, Nothing}=nothing, penalty::Float64=1e-3, bypass::Bool=true,
+            nadir::Union{Vector{Float64}, Nothing}=nothing, penalty::Float64=1e-3, augmecon_type::Int64=1,
             print_level::Int=0, atol::Float64=0.0)
-        return new(grid_points, sense_set, nadir, penalty, bypass, print_level, atol)
+        return new(grid_points, sense_set, nadir, penalty, augmecon_type, print_level, atol)
     end
 end
 
@@ -77,14 +77,14 @@ function MOI.get(alg::Augmecon, ::Penalty)
     return alg.penalty
 end
 
-struct Bypass <: MOA.AbstractAlgorithmAttribute end
-MOI.supports(::Augmecon, ::Bypass) = true
-function MOI.set(alg::Augmecon, ::Bypass, value)
-    alg.bypass = value
+struct AugmeconType <: MOA.AbstractAlgorithmAttribute end
+MOI.supports(::Augmecon, ::AugmeconType) = true
+function MOI.set(alg::Augmecon, ::AugmeconType, value)
+    alg.augmecon_type = value
     return
 end
-function MOI.get(alg::Augmecon, ::Bypass)
-    return alg.bypass
+function MOI.get(alg::Augmecon, ::AugmeconType)
+    return alg.augmecon_type
 end
 
 struct PrintLevel <: MOA.AbstractAlgorithmAttribute end

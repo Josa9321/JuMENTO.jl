@@ -1,5 +1,7 @@
 module TestAUGMECON
 
+if false include("../../src/JuMENTO.jl") end
+
 using Test
 
 using JuMP, HiGHS, Ipopt
@@ -7,24 +9,25 @@ using JuMP, HiGHS, Ipopt
 import MultiObjectiveAlgorithms as MOA
 import MultiObjectiveAlgorithms: MOI
 
-import JuMENTO.MethodAUGMECON
+import JuMENTO: MethodAUGMECON
 
 
 function run_tests()
-    for is_aug2 in [false]
-        @testset "Test AUGMECON $(is_aug2 ? 2 : 1)" begin
-            test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), is_augmecon_2=is_aug2)
-            test_simple_problems(simple_triobjective_problem(), simple_triobjective_frontier(), is_augmecon_2=is_aug2)
-            test_biobjective_knapsack(is_augmecon_2=is_aug2)
-            test_infeasible(is_augmecon_2=is_aug2)
-            test_unbounded(is_augmecon_2=is_aug2)
-            test_unbounded_second(is_augmecon_2=is_aug2)
-            test_quadratic(is_augmecon_2=is_aug2)
-            test_poor_numerics(is_augmecon_2=is_aug2)
-            # test_vectornonlinearfunction(is_augmecon_2=is_aug2)
-            # test_time_limit(is_augmecon_2=is_aug2)
-            # test_time_limit_large(is_augmecon_2=is_aug2)
-            test_vector_of_variables_objective(is_augmecon_2=is_aug2)
+    for aug_type in [1]
+        name = "AUGMECON $(aug_type)"
+        @testset "Test $(name)" begin
+            test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), augmecon_type=aug_type)
+            test_simple_problems(simple_triobjective_problem(), simple_triobjective_frontier(), augmecon_type=aug_type)
+            test_biobjective_knapsack(augmecon_type=aug_type)
+            test_infeasible(augmecon_type=aug_type)
+            test_unbounded(augmecon_type=aug_type)
+            test_unbounded_second(augmecon_type=aug_type)
+            test_quadratic(augmecon_type=aug_type)
+            test_poor_numerics(augmecon_type=aug_type)
+            # test_vectornonlinearfunction(augmecon_type=aug_type)
+            # test_time_limit(augmecon_type=aug_type)
+            # test_time_limit_large(augmecon_type=aug_type)
+            test_vector_of_variables_objective(augmecon_type=aug_type)
         end
     end
     return nothing
@@ -32,8 +35,8 @@ end
 
 #####
 
-function test_simple_problems(model, saved_frontier_set; is_augmecon_2)
-    set_attribute(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+function test_simple_problems(model, saved_frontier_set; augmecon_type)
+    set_attribute(model, MethodAUGMECON.AugmeconType(), augmecon_type)
 
     optimize!(model)
 
@@ -46,23 +49,16 @@ function test_simple_problems(model, saved_frontier_set; is_augmecon_2)
     return nothing
 end
 
-function test_no_solution_problems(model, reason; is_augmecon_2)
-    set_attribute(model, MethodAUGMECON.Bypass(), is_augmecon_2)
-    optimize!(model)
-    @test JuMP.termination_status(model) == reason
-    return nothing
-end
-
 ##### Specific tests (from MOA tests)
 
-function test_biobjective_knapsack(;is_augmecon_2::Bool)
+function test_biobjective_knapsack(;augmecon_type)
     p1 = [77, 94, 71, 63, 96, 82, 85, 75, 72, 91, 99, 63, 84, 87, 79, 94, 90]
     p2 = [65, 90, 90, 77, 95, 84, 70, 94, 66, 92, 74, 97, 60, 60, 65, 97, 93]
     w = [80, 87, 68, 72, 66, 77, 99, 85, 70, 93, 98, 72, 100, 89, 67, 86, 91]
     model = MOA.Optimizer(HiGHS.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(59))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     
     x = MOI.add_variables(model, length(w))
     MOI.add_constraint.(model, x, MOI.ZeroOne())
@@ -105,11 +101,11 @@ function test_biobjective_knapsack(;is_augmecon_2::Bool)
     return
 end
 
-function test_infeasible(;is_augmecon_2::Bool)
+function test_infeasible(;augmecon_type)
     model = MOA.Optimizer(HiGHS.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     MOI.add_constraint(model, 1.0 * x[1] + 1.0 * x[2], MOI.LessThan(-1.0))
@@ -123,11 +119,11 @@ function test_infeasible(;is_augmecon_2::Bool)
     return
 end
 
-function test_unbounded(;is_augmecon_2::Bool)
+function test_unbounded(;augmecon_type)
     model = MOA.Optimizer(HiGHS.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     f = MOI.Utilities.operate(vcat, Float64, 1.0 .* x...)
@@ -140,11 +136,11 @@ function test_unbounded(;is_augmecon_2::Bool)
     return
 end
 
-function test_unbounded_second(;is_augmecon_2::Bool)
+function test_unbounded_second(;augmecon_type)
     model = MOA.Optimizer(HiGHS.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
@@ -158,14 +154,14 @@ function test_unbounded_second(;is_augmecon_2::Bool)
     return
 end
 
-function test_quadratic(; is_augmecon_2)
+function test_quadratic(; augmecon_type)
     μ = [0.05470748600000001, 0.18257110599999998]
     Q = [0.00076204 0.00051972; 0.00051972 0.00546173]
     N = 2
     model = MOA.Optimizer(Ipopt.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     w = MOI.add_variables(model, N)
     MOI.add_constraint.(model, w, MOI.GreaterThan(0.0))
     MOI.add_constraint.(model, w, MOI.LessThan(1.0))
@@ -186,14 +182,14 @@ function test_quadratic(; is_augmecon_2)
     return
 end
 
-function test_poor_numerics(;is_augmecon_2)
+function test_poor_numerics(;augmecon_type)
     μ = [0.006898463772627643, -0.02972609131603086]
     Q = [0.030446 0.00393731; 0.00393731 0.00713285]
     N = 2
     model = MOA.Optimizer(Ipopt.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     w = MOI.add_variables(model, N)
     sharpe = MOI.add_variable(model)
     MOI.add_constraint.(model, w, MOI.GreaterThan(0.0))
@@ -233,14 +229,14 @@ end
 #####################
 #####################
 
-function test_vectornonlinearfunction(;is_augmecon_2)
+function test_vectornonlinearfunction(;augmecon_type)
     μ = [0.006898463772627643, -0.02972609131603086]
     Q = [0.030446 0.00393731; 0.00393731 0.00713285]
     N = 2
     model = MOA.Optimizer(Ipopt.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     w = MOI.add_variables(model, N)
     MOI.add_constraint.(model, w, MOI.GreaterThan(0.0))
     MOI.add_constraint.(model, w, MOI.LessThan(1.0))
@@ -265,14 +261,15 @@ function test_vectornonlinearfunction(;is_augmecon_2)
     return
 end
 
-function test_time_limit(;is_augmecon_2)
+function test_time_limit(;augmecon_type)
     p1 = [77, 94, 71, 63, 96, 82, 85, 75, 72, 91, 99, 63, 84, 87, 79, 94, 90]
     p2 = [65, 90, 90, 77, 95, 84, 70, 94, 66, 92, 74, 97, 60, 60, 65, 97, 93]
     w = [80, 87, 68, 72, 66, 77, 99, 85, 70, 93, 98, 72, 100, 89, 67, 86, 91]
     model = MOA.Optimizer(HiGHS.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
+    MOI.set(model, MOI.TimeLimitSec(), 0.0)
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     x = MOI.add_variables(model, length(w))
     MOI.add_constraint.(model, x, MOI.ZeroOne())
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -294,14 +291,14 @@ function test_time_limit(;is_augmecon_2)
     return
 end
 
-function test_time_limit_large(;is_augmecon_2)
+function test_time_limit_large(;augmecon_type)
     p1 = [77, 94, 71, 63, 96, 82, 85, 75, 72, 91, 99, 63, 84, 87, 79, 94, 90]
     p2 = [65, 90, 90, 77, 95, 84, 70, 94, 66, 92, 74, 97, 60, 60, 65, 97, 93]
     w = [80, 87, 68, 72, 66, 77, 99, 85, 70, 93, 98, 72, 100, 89, 67, 86, 91]
     model = MOA.Optimizer(HiGHS.Optimizer)
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     MOI.set(model, MOI.TimeLimitSec(), 1.0)
     x = MOI.add_variables(model, length(w))
     MOI.add_constraint.(model, x, MOI.ZeroOne())
@@ -322,13 +319,13 @@ function test_time_limit_large(;is_augmecon_2)
     return
 end
 
-function test_vector_of_variables_objective(;is_augmecon_2)
+function test_vector_of_variables_objective(;augmecon_type)
     model = MOI.instantiate(; with_bridge_type = Float64) do
         return MOA.Optimizer(HiGHS.Optimizer)
     end
     MOI.set(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MethodAUGMECON.Bypass(), is_augmecon_2)
+    MOI.set(model, MethodAUGMECON.AugmeconType(), augmecon_type)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.ZeroOne())
     f = MOI.VectorOfVariables(x)
@@ -433,16 +430,6 @@ function simple_triobjective_problem()
         (1.44 * LIGN + 0.72 * OIL + 0.45 * NG),
         (OIL + NG)
     ])
-    return model
-end
-
-
-function complex_model()
-    model = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
-    set_silent(model)
-
-    set_attribute(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10))
-    
     return model
 end
 
