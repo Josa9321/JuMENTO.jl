@@ -101,7 +101,7 @@ function __set_model(algorithm, inner, f, ranges_set, ::Augmecon2)
     surplus_variables = MOI.add_variables(inner, m - 1)
     MOI.add_constraints(inner, surplus_variables, [MOI.GreaterThan(0.0) for _ in Base.OneTo(m - 1)])
     objective_term = -algorithm.penalty * sum(
-        surplus_variables[o-1] / (ranges_set[o][1] - ranges_set[o][end]) * (10^(2 - o)) for o in 2:m)
+        surplus_variables[o-1] / (ranges_set[o][1] - ranges_set[o][end]) * (10.0^(2.0 - o)) for o in 2:m)
 
     MOI.set(inner, MOI.ObjectiveFunction{typeof(objs_set[1])}(), objs_set[1] + objective_term)
 
@@ -129,7 +129,7 @@ function __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_v
                 push!(solutions, MOA.SolutionPoint(X, Y))
                 MOA._log_subproblem_solve(model, Y)
 
-                b = __get_number_of_redundant_iterations(surplus_variables[1], ranges_set[o])
+                b = __get_number_of_redundant_iterations(inner, surplus_variables[1], ranges_set[o])
                 i_k += b
             else
                 i_k = length(ranges_set[o])
@@ -202,7 +202,8 @@ function __payoff_table(model, inner, f)
 end
 
 
-function __get_number_of_redundant_iterations(s_2, objective_range)
-    division = s_2 / objective_range.step.hi
+function __get_number_of_redundant_iterations(inner, s_2, objective_range)
+    value = MOI.get(inner, MOI.VariablePrimal(), s_2)
+    division = value / abs(objective_range.step.hi)
     return trunc(Int64, division)
 end

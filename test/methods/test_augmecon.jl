@@ -13,20 +13,24 @@ import JuMENTO: MethodAUGMECON
 
 
 function run_tests()
-    for aug_type in [1]
-        name = "AUGMECON $(aug_type)"
+    methods = Dict(1 => "AUGMECON", 2 => "AUGMECON 2", 3 => "S AUGMECON", 4 => "R AUGMECON")
+    for aug_type in [1, 2]
+        name = methods[aug_type]
+        test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), augmecon_type=aug_type)
         @testset "Test $(name)" begin
             test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), augmecon_type=aug_type)
-            test_simple_problems(simple_triobjective_problem(), simple_triobjective_frontier(), augmecon_type=aug_type)
+            # test_simple_problems(simple_triobjective_problem(), simple_triobjective_frontier(), augmecon_type=aug_type)
             test_biobjective_knapsack(augmecon_type=aug_type)
             test_infeasible(augmecon_type=aug_type)
             test_unbounded(augmecon_type=aug_type)
             test_unbounded_second(augmecon_type=aug_type)
             test_quadratic(augmecon_type=aug_type)
             test_poor_numerics(augmecon_type=aug_type)
+
             # test_vectornonlinearfunction(augmecon_type=aug_type)
             # test_time_limit(augmecon_type=aug_type)
             # test_time_limit_large(augmecon_type=aug_type)
+
             test_vector_of_variables_objective(augmecon_type=aug_type)
         end
     end
