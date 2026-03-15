@@ -38,7 +38,7 @@ function level_diagrams(set_of_frontiers::Vector{Matrix{F}};
     @assert all(f -> size(f, 1) == m, set_of_frontiers) "Not all frontiers have the same number of objectives (rows)"
 
     fig = make_subplots(
-        rows=m,
+        cols=m,
         subplot_titles=categories[:, :]
     )
 
@@ -90,7 +90,7 @@ function level_diagrams(frontier_set::Matrix{F};
     m = size(frontier_set, 1)
 
     fig = make_subplots(
-        rows=m,
+        cols=m,
         subplot_titles=categories[:, :]
     )
 
@@ -134,7 +134,7 @@ function __level_diagrams!(fig, frontier_set::Matrix{F}, normalized_set::Matrix{
                 name=name,
                 showlegend=first_trace
             ),
-            row=i
+            col=i
         )
         first_trace = false
     end
