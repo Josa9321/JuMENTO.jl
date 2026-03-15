@@ -33,6 +33,7 @@ function scatter(set_of_frontiers::Vector{Matrix{F}};
 
     m = size(set_of_frontiers[1], 1)
     @assert all(f -> size(f, 1) == m, set_of_frontiers) "Not all frontiers have the same number of objectives (rows)"
+    @assert size(set_of_frontiers[1], 1) == length(categories) "Number of categories defined is different than number of objectives in frontiers (rows)"
 
     fig = nothing
     if m == 2
@@ -73,6 +74,9 @@ Behavior:
 """
 function scatter(frontier_set::Matrix{F}; categories::Vector{String}=["f_$(i)" for i in axes(frontier_set, 1)],
     is_3d::Bool=false, name::String="Method", type_plot::String="markers+lines") where {F<:Number}
+
+    @assert size(frontier_set, 1) == length(categories) "Number of categories defined is different than number of objectives in frontier set (rows)"
+
     fig = nothing
     if size(frontier_set, 1) == 2
         fig = __2d_scatter(frontier_set, categories, type_plot, name)
@@ -139,7 +143,7 @@ function __nd_scatter(frontiers, categories, type_plot, name)
     m = length(categories)
     fig = make_subplots(
         rows=m, cols=m,
-        subplot_titles=[f_1 * " × " * f_2 for (f_1, f_2) in Iterators.product(categories, categories)]
+        subplot_titles=[(i_1 != i_2 ? categories[i_1] * " × " * categories[i_2] : categories[i_1]) for (i_1, i_2) in Iterators.product(1:m, 1:m)]
     )
     if typeof(frontiers) <: Matrix
         __nd_scatter!(fig, frontiers, type_plot, name, 1)
@@ -158,25 +162,35 @@ function __nd_scatter!(fig, frontier_set::Matrix{F}, type_plot, name, id) where 
     first_trace = true
     for i_1 in axes(frontier_set, 1)
         for i_2 in axes(frontier_set, 1)
-            if i_1 == i_2
-                continue
-            end
             x = view(frontier_set, i_1, :)
             order = sortperm(x)
             color = COLORS_SET[mod1(id, length(COLORS_SET))]
-            add_trace!(
-                fig,
-                PlotlyJS.scatter(
-                    x=frontier_set[i_1, order],
-                    y=frontier_set[i_2, order],
-                    mode=type_plot,
-                    marker=attr(color=color),
-                    line=attr(color=color), legendgroup=name,
-                    name=name,
-                    showlegend=first_trace
-                ),
-                row=i_1, col=i_2,
-            )
+            if i_1 == i_2
+                add_trace!(
+                    fig,
+                    PlotlyJS.histogram(
+                        x=frontier_set[i_1, order],
+                        name=name,
+                        marker_color=color,
+                        showlegend=first_trace
+                    ),
+                    row=i_1, col=i_2,
+                )
+            else
+                add_trace!(
+                    fig,
+                    PlotlyJS.scatter(
+                        x=frontier_set[i_1, order],
+                        y=frontier_set[i_2, order],
+                        mode=type_plot,
+                        marker=attr(color=color),
+                        line=attr(color=color), legendgroup=name,
+                        name=name,
+                        showlegend=first_trace
+                    ),
+                    row=i_1, col=i_2,
+                )
+            end
             first_trace = false
         end
     end
