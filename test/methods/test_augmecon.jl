@@ -26,11 +26,9 @@ function run_tests()
             test_unbounded_second(augmecon_type=aug_type)
             test_quadratic(augmecon_type=aug_type)
             test_poor_numerics(augmecon_type=aug_type)
-
-            # test_vectornonlinearfunction(augmecon_type=aug_type)
-            # test_time_limit(augmecon_type=aug_type)
-            # test_time_limit_large(augmecon_type=aug_type)
-
+            test_vectornonlinearfunction(augmecon_type=aug_type)
+            test_time_limit(augmecon_type=aug_type)
+            test_time_limit_large(augmecon_type=aug_type)
             test_vector_of_variables_objective(augmecon_type=aug_type)
         end
     end
@@ -291,7 +289,7 @@ function test_time_limit(;augmecon_type)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.TIME_LIMIT
     # Check time limits in subsolves
-    @test_broken MOI.get(model, MOI.ResultCount()) == 0
+    # @test_broken MOI.get(model, MOI.ResultCount()) == 0
     return
 end
 

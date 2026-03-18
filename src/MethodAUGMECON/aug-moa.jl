@@ -58,11 +58,16 @@ function __set_model(algorithm, inner, f, ranges_set, ::Augmecon1)
 
     surplus_variables = MOI.add_variables(inner, m - 1)
     MOI.add_constraints(inner, surplus_variables, [MOI.GreaterThan(0.0) for _ in Base.OneTo(m - 1)])
-    objective_term = -algorithm.penalty * sum(
-        surplus_variables[o-1] / (ranges_set[o][1] - ranges_set[o][end]) for o in 2:m)
 
-    MOI.set(inner, MOI.ObjectiveFunction{typeof(objs_set[1])}(), objs_set[1] + objective_term)
-
+    sum_terms = map(2:m) do o
+        return MOI.ScalarAffineTerm{Float64}(
+            -algorithm.penalty / (ranges_set[o][1] - ranges_set[o][end]),
+            surplus_variables[o-1],
+        )
+    end
+    objective_term = MOI.ScalarAffineFunction(sum_terms, 0.0)
+    new_obj = MOI.Utilities.operate(+, Float64, objs_set[1], objective_term)
+    MOI.set(inner, MOI.ObjectiveFunction{typeof(new_obj)}(), new_obj)
     constraints_set = MOI.add_constraints(inner, [objs_set[o] + surplus_variables[o-1] for o in 2:m
         ], [MOI.EqualTo(ranges_set[o][1]) for o in 2:m])
     return surplus_variables, constraints_set
@@ -72,12 +77,17 @@ function __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_v
     solutions, aug_type::Augmecon1; o=2
 )
     variables = MOI.get(inner, MOI.ListOfVariableIndices())
-    objs_set = MOI.Utilities.eachscalar(f)
-    m = length(objs_set)
+    m = length(ranges_set)
+    status = MOI.OPTIMAL
     for eps in ranges_set[o]
+        if (ret = MOA._check_premature_termination(model)) !== nothing || status == MOI.TIME_LIMIT
+            status = MOI.TIME_LIMIT
+            break
+        end
+
         MOI.set(model, MOI.ConstraintSet(), constraints_set[o-1], MOI.EqualTo(eps))
         if o < m
-            __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_variables, constraints_set,
+            status, solutions = __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_variables, constraints_set,
                 solutions, aug_type, o=o + 1)
         else
             MOA.optimize_inner!(model)
@@ -91,7 +101,6 @@ function __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_v
             end
         end
     end
-    status = MOI.OPTIMAL
     return status, solutions
 end
 
@@ -117,15 +126,19 @@ function __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_v
     solutions, aug_type::Augmecon2; o=length(ranges_set)
 )
     variables = MOI.get(inner, MOI.ListOfVariableIndices())
-    objs_set = MOI.Utilities.eachscalar(f)
-    m = length(objs_set)
     i_k = 0
+    status = MOI.OPTIMAL
     while i_k < length(ranges_set[o])
+        if (ret = MOA._check_premature_termination(model)) !== nothing || status == MOI.TIME_LIMIT
+            status = MOI.TIME_LIMIT
+            break
+        end
+
         i_k += 1
         eps = ranges_set[o][i_k]
         MOI.set(model, MOI.ConstraintSet(), constraints_set[o-1], MOI.EqualTo(eps))
         if o > 2
-            __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_variables, constraints_set,
+            status, solutions = __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_variables, constraints_set,
                 solutions, aug_type, o=o - 1)
         else
             MOA.optimize_inner!(model)
@@ -139,6 +152,59 @@ function __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_v
                 i_k += b
             else
                 i_k = length(ranges_set[o])
+            end
+        end
+    end
+    return status, solutions
+end
+
+##### S AUGMECON
+
+function __set_model(algorithm, inner, f, ranges_set, ::SAugmecon)
+    objs_set = MOI.Utilities.eachscalar(f)
+    m = length(objs_set)
+
+
+    MOI.set(inner, MOI.ObjectiveFunction{typeof(objs_set[1])}(), objs_set[1] + sum(
+        objs_set[o] / (ranges_set[o][1] - ranges_set[o][end]) for o in 2:m))
+
+    constraints_set = MOI.add_constraints(inner, [objs_set[o] for o in 2:m
+        ], [MOI.LessThan(ranges_set[o][1]) for o in 2:m])
+    return nothing, constraints_set
+end
+
+
+function __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_variables, constraints_set,
+    solutions, aug_type::SAugmecon; o=length(ranges_set), actual_position=zeros(Int64, length(ranges_set) - 1)
+)
+    variables = MOI.get(inner, MOI.ListOfVariableIndices())
+
+    m = length(ranges_set)
+
+    idx_o = o - 1
+    actual_position[idx_o] = 0
+    while actual_position[idx_o] < length(ranges_set[o])
+        actual_position[idx_o] += 1
+        eps = ranges_set[o][actual_position[idx_o]]
+        MOI.set(model, MOI.ConstraintSet(), constraints_set[idx_o], MOI.LessThan(eps))
+        if o > 2
+            __recursive_augmecon!(algorithm, model, inner, f, ranges_set, surplus_variables, constraints_set,
+                solutions, aug_type, o=o - 1, actual_position=actual_position)
+        else
+            MOA.optimize_inner!(model)
+            status_ik = MOI.get(inner, MOI.PrimalStatus())
+            if MOA._is_scalar_status_feasible_point(status_ik)
+                X, Y = MOA._compute_point(model, variables, f)
+                push!(solutions, MOA.SolutionPoint(X, Y))
+                MOA._log_subproblem_solve(model, Y)
+            else
+                for i in Base.OneTo(m - 1)
+                    if actual_position[i] == 1
+                        actual_position[i] = length(ranges_set[i+1])
+                    else
+                        break
+                    end
+                end
             end
         end
     end
