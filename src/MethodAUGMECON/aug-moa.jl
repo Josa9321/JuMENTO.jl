@@ -68,7 +68,8 @@ function __set_model(algorithm, inner, f, ranges_set, ::Augmecon1)
     objective_term = MOI.ScalarAffineFunction(sum_terms, 0.0)
     new_obj = MOI.Utilities.operate(+, Float64, objs_set[1], objective_term)
     MOI.set(inner, MOI.ObjectiveFunction{typeof(new_obj)}(), new_obj)
-    constraints_set = MOI.add_constraints(inner, [objs_set[o] + surplus_variables[o-1] for o in 2:m
+
+    constraints_set = MOI.add_constraints(inner, [MOI.Utilities.operate(+, Float64, objs_set[o], surplus_variables[o-1]) for o in 2:m
         ], [MOI.EqualTo(ranges_set[o][1]) for o in 2:m])
     return surplus_variables, constraints_set
 end
@@ -112,12 +113,18 @@ function __set_model(algorithm, inner, f, ranges_set, ::Augmecon2)
 
     surplus_variables = MOI.add_variables(inner, m - 1)
     MOI.add_constraints(inner, surplus_variables, [MOI.GreaterThan(0.0) for _ in Base.OneTo(m - 1)])
-    objective_term = -algorithm.penalty * sum(
-        surplus_variables[o-1] / (ranges_set[o][1] - ranges_set[o][end]) * (10.0^(2.0 - o)) for o in 2:m)
 
-    MOI.set(inner, MOI.ObjectiveFunction{typeof(objs_set[1])}(), objs_set[1] + objective_term)
+    sum_terms = map(2:m) do o
+        return MOI.ScalarAffineTerm{Float64}(
+                                             -algorithm.penalty * (10.0^(2-o))/ (ranges_set[o][1] - ranges_set[o][end]),
+            surplus_variables[o-1],
+        )
+    end
+    objective_term = MOI.ScalarAffineFunction(sum_terms, 0.0)
+    new_obj = MOI.Utilities.operate(+, Float64, objs_set[1], objective_term)
+    MOI.set(inner, MOI.ObjectiveFunction{typeof(new_obj)}(), new_obj)
 
-    constraints_set = MOI.add_constraints(inner, [objs_set[o] + surplus_variables[o-1] for o in 2:m
+    constraints_set = MOI.add_constraints(inner, [MOI.Utilities.operate(+, Float64, objs_set[o], surplus_variables[o-1]) for o in 2:m
         ], [MOI.EqualTo(ranges_set[o][1]) for o in 2:m])
     return surplus_variables, constraints_set
 end
