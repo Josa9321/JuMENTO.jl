@@ -14,7 +14,7 @@ import JuMENTO: MethodAUGMECON
 
 function run_tests()
     methods = Dict(1 => "AUGMECON", 2 => "AUGMECON 2", 3 => "S AUGMECON", 4 => "R AUGMECON")
-    for aug_type in [1, 2]
+    for aug_type in [1, 2, 3]
         name = methods[aug_type]
         test_simple_problems(simple_biobjective_problem(), simple_biobjective_frontier(), augmecon_type=aug_type)
         @testset "Test $(name)" begin
