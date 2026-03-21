@@ -11,13 +11,13 @@
 JuMENTO is a Julia-based framework for **multi-objective optimization**, implementing two widely used families of methods:
 
 - **AUGMECON** and **AUGMECON 2** (Augmented ε-Constraint Method)
-- **NSGA-II** (Non-dominated Sorting Genetic Algorithm II)
+<!-- - **NSGA-II** (Non-dominated Sorting Genetic Algorithm II) -->
 
 It integrates seamlessly with [JuMP](https://jump.dev/) models and provides:
 
-- Exact and metaheuristic optimization methods
-- Metrics for Pareto front quality assessment
-- Tools for saving and plotting results
+- Exact optimization methods
+- Metrics for Pareto Frontier quality assessment
+- Tools for plotting Pareto Frontiers with 2 or more objectives
 
 ---
 
@@ -29,9 +29,9 @@ It integrates seamlessly with [JuMP](https://jump.dev/) models and provides:
   - [Augmented ε-Constraint Method (AUGMECON)](#augmented-ε-constraint-method-augmecon)
       - [Configure User Options for AUGMECON](#configure-user-options-for-augmecon)
       - [Solve with AUGMECON](#solve-with-augmecon)
-  - [NSGA-II](#nsga-ii)
-      - [Configure User Options for NSGA-II](#configure-user-options-for-nsga-ii)
-      - [Solve with NSGA-II](#solve-with-nsga-ii)
+  <!-- - [NSGA-II](#nsga-ii) -->
+  <!--     - [Configure User Options for NSGA-II](#configure-user-options-for-nsga-ii) -->
+  <!--     - [Solve with NSGA-II](#solve-with-nsga-ii) -->
 - [Evaluating Frontiers](#evaluating-frontiers)
   - [Plot Results](#plot-results)
   - [Metrics for Evaluation](#metrics-for-evaluation)
@@ -54,13 +54,18 @@ Pkg.add(url="https://github.com/Josa9321/JuMENTO.jl")
 ## **How to Use**
 
 ### Build a Model
-To solve problems with JuMENTO, you must first define a **JuMP** model (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/)).
+To solve problems with JuMENTO, you must first define a **JuMP** model (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/) and [Multiobjective Tutorial](https://jump.dev/JuMP.jl/stable/tutorials/linear/multi_objective_knapsack/)).
 Below is an example showing how to build a model for use with JuMENTO:
 
 ```julia
-using JuMP, JuMENTO, HiGHS
 
-model = Model(HiGHS.Optimizer)
+using JuMP, HiGHS
+
+import MultiObjectiveAlgorithms as MOA
+
+using JuMENTO
+
+model = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
 
 @variable(model, x[1:2] >= 0) 
 
@@ -72,109 +77,86 @@ end
 @objective(model, Max, [x[1],  3*x[1] + 4*x[2]])
 ```
 
-Note that the objective sense must be specified when using the `@objective` macro. In JuMENTO, this sense is applied to the entire objective vector. To define the sense of each objective individually, pass the `objective_sense_set`
-option when calling `augmecon` (see Section 2.1.).
-
-Alternatively, you may declare the objectives as JuMP variables and assign their values using equality constraints:
-
-```julia
-model = Model(HiGHS.Optimizer)
-
-@variables model begin
-    x[1:2] >= 0
-    objs[1:2]
-end
-
-@constraints model begin
-    c1, x[1] <= 20
-    c2, x[2] <= 40
-    c3, 5*x[1] + 4*x[2] <= 200
-
-    objective_1, objs[1] == x[1]
-    objective_2, objs[2] == 3*x[1] + 4*x[2]
-end
-```
-
-As mentioned earlier, the objective sense for each objective can be set individually by passing the `objective_sense_set` option when calling `augmecon`.
-
 ---
 
 ### Augmented ε-Constraint Method (AUGMECON)
 
 The AUGMECON method is an exact approach that generates the Pareto frontier by solving a series of single-objective optimization problems. It is based on the ε-constraint method, which transforms a multi-objective problem into a single-objective one by treating all but one objective as constraints with specified bounds (ε values). 
 
-For more details on the method, please refer to the original paper by Mavrotas (2009) and its improved version by Mavrotas and Florios (2013).
+For further details on the methods, please refer to Mavrotas (2009) paper for the original AUGMECON, Mavrotas and Florios (2013) paper for AUGMECON2, and Zhang and Reimann (2014) paper for SAUGMECON.
 
 #### Configure User Options for AUGMECON
 
-When using an AUGMECON-based method, you can control its behavior by passing keyword options to `augmecon`. Some options are required; others are optional. The table below summarizes the available parameters:
+When using an AUGMECON-based method, you can control its behavior by adding attributes to the model. Some options are required; others are optional. The table below summarizes the available parameters:
 
 
 | Parameter               | Description                                                           | Default       |
 | ----------------------- | --------------------------------------------------------------------- | ------------- |
-| `grid_points`         | Number of grid divisions for ε-constraint                            | Required      |
-| `nadir`               | Nadir point                                                           | Auto computed |
-| `objective_sense_set` | Objective sense for each objective (:Min or :Max)                     | [:Max ...]    |
-| `penalty`             | Numeric value that is used by the AUGMECON                            | 1e-3          |
-| `bypass`              | Used to know whether or not AUGMECON 2 will be used                   | true          |
-| `dominance_eps`       | Tolerance used when determining dominance relations between solutions | 1e-8          |
-| `print_level`         | Logging detail (0 or 1)                                               | 0             |
+| `GridPoints`            | Number of grid divisions for ε-constraint                             | Required      |
+| `Nadir`                 | Nadir point                                                           | Auto computed |
+| `Penalty`               | Numeric value that is used by the AUGMECON                            | 1e-3          |
+| `AugmeconType`          | Used to know which AUGMECON will be used                              | 1             |
+| `PrintLevel`            | Logging detail (0 or 1)                                               | 0             |
+| `Atol`                  | Tolerance used when determining dominance relations between solutions | 1e-8          |
+<!-- | `SenseSet`              | Objective sense for each objective (:Min or :Max)                     | [:Max ...]    | -->
 
+
+
+```julia
+set_attribute(model, MOA.Algorithm(), MethodAUGMECON.Augmecon(10)) # 10 grid points
+set_attribute(model, MethodAUGMECON.AugmeconType(), 2) # To use AUGMECON 2
+set_attribute(model, MethodAUGMECON.GridPoints(), 20) # If one wants to change
+```
+
+To use:
+- AUGMECON: `set_attribute(model, MethodAUGMECON.AugmeconType(), 1)`
+- AUGMECON 2: `set_attribute(model, MethodAUGMECON.AugmeconType(), 2)`
+- SAUGMECON: `set_attribute(model, MethodAUGMECON.AugmeconType(), 3)`
 
 #### Solve with AUGMECON
 
-Solve the model above with the `augmecon` function. The call returns the Pareto frontier (a `Vector{SolutionJuMP}`) and a report with method diagnostics.
+Solve the model above, its only necessary to call `optimize!`. For additional details, check [MultiObjectiveAlgorithms.jl](https://github.com/jump-dev/MultiObjectiveAlgorithms.jl).
 
-```julia
-frontier, report = augmecon(model, grid_points=10)
-```
-
-If the objectives were declared as JuMP variables in a `objs` vector, call:
-
-```julia
-frontier, report = augmecon(model, objs, grid_points=10)
-```
-
----
-
-### NSGA-II
-
-**WARNING: NSGA-II is not properly implemented yet. Use with caution.**
-
-NSGA-II is a popular metaheuristic algorithm for solving multi-objective optimization problems. It is based on the concept of non-dominated sorting and uses a fast elitist approach to maintain a diverse set of solutions. The algorithm iteratively evolves a population of candidate solutions through selection, crossover, and mutation operations, aiming to approximate the Pareto frontier.
-
-#### Configure User Options for NSGA-II
-
-To use AUGMECON, the user can provide some additional information that will be taken into account when making a decision. Below are some of the details:
-
-| Parameter          | Description                                   | Default |
-| ------------------ | --------------------------------------------- | ------- |
-| `pop_size`         | Population size                               | 100     |
-| `generations`      | Number of generations                         | 100     |
-| `penalty`          | Penalty type for constraint violations        | linear  |
-| `mutation_rate`    | Mutation probability                          | 0.05    |
-| `crossover_rate`   | Crossover probability                         | 0.9     |
-| `default_range`    | Default variable range if no bounds specified | 100.0   |
-
-*NOTE*: The penalty_type determines how constraint violations are penalized. Each type is recommended for different scenarios:
-
-    - linear: Used where the impact of constraint violations is proportional and moderate and when large violations do not need to be heavily punished.
-
-    - quadratic: Used when you want to strongly discourage large violations while tolearting small ones at the start. He forces solutions to become feasible quickly.
-
-    - inverse: Used when small violations should be penalized more heavily than large ones. He preserves diversity and exploration in early generations.
-
-    - adaptive: Used for difficult problems with many constraints, where you want to allow violations in the early stage and gradually enforce feasibility.
-
-*NOTE*: The default_range value is necessary when no upper bounds are established for a variable. Therefore, a float value is used to determine a possible range. It's also important to note that a very large default_range value can cause the number of generations required to reach a viable solution to take a long time.
-
-#### Solve with NSGA-II
-
-To use NSGA-II, you need to call it with two objects that will store the results. For options, you need to add a ";" after the model. Below is an example:
-
-```julia
-frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:quadratic)
-```
+<!-- --- -->
+<!---->
+<!-- ### NSGA-II -->
+<!---->
+<!-- **WARNING: NSGA-II is not properly implemented yet. Use with caution.** -->
+<!---->
+<!-- NSGA-II is a popular metaheuristic algorithm for solving multi-objective optimization problems. It is based on the concept of non-dominated sorting and uses a fast elitist approach to maintain a diverse set of solutions. The algorithm iteratively evolves a population of candidate solutions through selection, crossover, and mutation operations, aiming to approximate the Pareto frontier. -->
+<!---->
+<!-- #### Configure User Options for NSGA-II -->
+<!---->
+<!-- To use AUGMECON, the user can provide some additional information that will be taken into account when making a decision. Below are some of the details: -->
+<!---->
+<!-- | Parameter          | Description                                   | Default | -->
+<!-- | ------------------ | --------------------------------------------- | ------- | -->
+<!-- | `pop_size`         | Population size                               | 100     | -->
+<!-- | `generations`      | Number of generations                         | 100     | -->
+<!-- | `penalty`          | Penalty type for constraint violations        | linear  | -->
+<!-- | `mutation_rate`    | Mutation probability                          | 0.05    | -->
+<!-- | `crossover_rate`   | Crossover probability                         | 0.9     | -->
+<!-- | `default_range`    | Default variable range if no bounds specified | 100.0   | -->
+<!---->
+<!-- *NOTE*: The penalty_type determines how constraint violations are penalized. Each type is recommended for different scenarios: -->
+<!---->
+<!--     - linear: Used where the impact of constraint violations is proportional and moderate and when large violations do not need to be heavily punished. -->
+<!---->
+<!--     - quadratic: Used when you want to strongly discourage large violations while tolearting small ones at the start. He forces solutions to become feasible quickly. -->
+<!---->
+<!--     - inverse: Used when small violations should be penalized more heavily than large ones. He preserves diversity and exploration in early generations. -->
+<!---->
+<!--     - adaptive: Used for difficult problems with many constraints, where you want to allow violations in the early stage and gradually enforce feasibility. -->
+<!---->
+<!-- *NOTE*: The default_range value is necessary when no upper bounds are established for a variable. Therefore, a float value is used to determine a possible range. It's also important to note that a very large default_range value can cause the number of generations required to reach a viable solution to take a long time. -->
+<!---->
+<!-- #### Solve with NSGA-II -->
+<!---->
+<!-- To use NSGA-II, you need to call it with two objects that will store the results. For options, you need to add a ";" after the model. Below is an example: -->
+<!---->
+<!-- ```julia -->
+<!-- frontier, report = nsga2(model; pop_size=200,generations=200,penalty=:quadratic) -->
+<!-- ``` -->
 
 ---
 
@@ -345,10 +327,11 @@ To test the implemented multi-objective optimization methods, you can access the
 
 - Mavrotas, G. (2009). "Effective implementation of the epsilon-constraint method in Multi-Objective Mathematical Programming problems." *Applied Mathematics and Computation*, 213(2), 455–465. [DOI: 10.1016/j.amc.2009.03.027](https://doi.org/10.1016/j.amc.2009.03.027)
 - Mavrotas, G., & Florios, K. (2013). "An improved version of the augmented ε-constraint method (AUGMECON2) for finding the exact Pareto set in Multi-Objective Integer Programming problems." *Applied Mathematics and Computation*, 219(18), 9652–9669. [DOI: 10.1016/j.amc.2013.03.002](https://doi.org/10.1016/j.amc.2013.03.002)
+- Zhang, W., & Reimann, M. (2014). A simple augmented ∊-constraint method for multi-objective mathematical integer programming problems. European Journal of Operational Research, 234(1), 15–24. [DOI: 10.1016/j.ejor.2013.09.001](https://doi.org/10.1016/j.ejor.2013.09.001)
 
-### **NSGA**
-
-- Deb, K., Pratap, A., Agarwal, S., & Meyarivan, T. (2002). "A fast and elitist multiobjective genetic algorithm: NSGA-II." *IEEE Transactions on Evolutionary Computation*, 6(2), 182–197. [DOI: 10.1109/4235.996017](https://doi.org/10.1109/4235.996017)
+<!-- ### **NSGA** -->
+<!---->
+<!-- - Deb, K., Pratap, A., Agarwal, S., & Meyarivan, T. (2002). "A fast and elitist multiobjective genetic algorithm: NSGA-II." *IEEE Transactions on Evolutionary Computation*, 6(2), 182–197. [DOI: 10.1109/4235.996017](https://doi.org/10.1109/4235.996017) -->
 
 ### **Additional content**
 
