@@ -1,7 +1,7 @@
 if false
-    include("../src/JuMENTO.jl")
+    include("../src/jumento.jl")
 end
-using JuMENTO
+using jumento
 
 function test_multiobjective_metrics()
 

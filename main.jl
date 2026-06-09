@@ -1,5 +1,5 @@
 using Revise
 
-if false include("./src/JuMENTO.jl") end
+if false include("./src/jumento.jl") end
 
-using JuMENTO
+using jumento

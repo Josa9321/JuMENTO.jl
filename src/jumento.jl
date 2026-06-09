@@ -1,4 +1,4 @@
-module JuMENTO
+module jumento
 
 using JuMP, Printf, LinearAlgebra, Statistics, Random
 import MultiObjectiveAlgorithms as MOA

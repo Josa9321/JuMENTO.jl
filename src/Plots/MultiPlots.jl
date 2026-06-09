@@ -16,7 +16,7 @@ module MultiPlots
 
 using PlotlyJS, LinearAlgebra
 
-import ..JuMENTO.normalize_frontier
+import ..jumento.normalize_frontier
 
 export parallel_coordinates, radar, scatter, level_diagrams
 
