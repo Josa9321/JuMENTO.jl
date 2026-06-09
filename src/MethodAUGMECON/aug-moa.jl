@@ -248,7 +248,7 @@ function __update_positions!(positions, relative_worst_values, ranges_set)
             R_n = ranges_set[o+1]
             positions[o+1] += 1
             if positions[o+1] <= length(R_n)
-                better_position = findlast(idx -> R_n[idx] >= relative_worst_values[o+1], eachindex(R_n)) + 1
+                better_position = findlast(idx -> R_n[idx] >= relative_worst_values[o+1] - 1e-5, eachindex(R_n)) + 1
                 relative_worst_values[o+1] = R_n[end]
                 if better_position >= positions[o+1]
                     positions[o+1] = better_position
