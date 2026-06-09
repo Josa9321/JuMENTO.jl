@@ -8,16 +8,16 @@
 [![Julia](https://img.shields.io/badge/julia-v1.10+-blue.svg)](https://julialang.org/)
 [![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-JuMENTO is a Julia-based framework for **multi-objective optimization**, implementing two widely used families of methods:
+`JuMENTO.jl` is a Julia-based mathematical programming framework designed for **multi-objective optimization**. Built to integrate seamlessly with the [JuMP.dev](https://jump.dev/) ecosystem, it provides deterministic exact methods to generate, analyze, and visualize Pareto frontiers.
 
-- **AUGMECON** and **AUGMECON 2** (Augmented ε-Constraint Method)
-<!-- - **NSGA-II** (Non-dominated Sorting Genetic Algorithm II) -->
+## 🚀 Key Features
 
-It integrates seamlessly with [JuMP](https://jump.dev/) models and provides:
-
-- Exact optimization methods
-- Metrics for Pareto Frontier quality assessment
-- Tools for plotting Pareto Frontiers with 2 or more objectives
+* **Exact Optimization Methods:** Native implementations of the Augmented $\epsilon$-Constraint family:
+    * `AUGMECON`
+    * `AUGMECON 2`
+    * `SAUGMECON`
+* **Quality Metrics:** Tools for evaluating and assessing the quality of computed Pareto Frontiers.
+* **Advanced Visualization:** Built-in support via the `MultiPlots` module to visualize high-dimensional objective spaces (2, 3, or more objectives) using interactive PlotlyJS charts (including Radar, Parallel Coordinates, and Scatter plots).
 
 ---
 
