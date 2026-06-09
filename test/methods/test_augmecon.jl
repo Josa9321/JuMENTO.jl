@@ -1,6 +1,6 @@
 module TestAUGMECON
 
-if false include("../../src/jumento.jl") end
+if false include("../../src/JuMENTO.jl") end
 
 using Test
 
@@ -9,7 +9,7 @@ using JuMP, HiGHS, Ipopt
 import MultiObjectiveAlgorithms as MOA
 import MultiObjectiveAlgorithms: MOI
 
-import jumento: MethodAUGMECON
+import JuMENTO: MethodAUGMECON
 
 
 function run_tests()

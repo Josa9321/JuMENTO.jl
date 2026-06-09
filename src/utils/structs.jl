@@ -23,7 +23,7 @@ end
 """
     struct AugmeconJuMP
 
-A `AugmeconJuMP` struct represents an optimization problem formulated using the jumento Package.
+A `AugmeconJuMP` struct represents an optimization problem formulated using the JuMENTO Package.
 It holds the following attributes:
 - `model::Model`: A JuMP model containing the optimization problem.
 - `objectives::Vector{VariableRef}`: A vector that contains the objectives of the optimization problem.

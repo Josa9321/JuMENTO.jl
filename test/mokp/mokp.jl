@@ -5,7 +5,7 @@ using JuMP, HiGHS, XLSX, Test
 import MultiObjectiveAlgorithms as MOA
 import MultiObjectiveAlgorithms: MOI
 
-import jumento: MethodAUGMECON
+import JuMENTO: MethodAUGMECON
 
 export solve_kp_instance, test_instances_set
 

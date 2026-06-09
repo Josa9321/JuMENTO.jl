@@ -2,8 +2,8 @@ module TestMetrics
 
 using Test
 
-import jumento: Metrics
-import jumento: normalize_frontier
+import JuMENTO: Metrics
+import JuMENTO: normalize_frontier
 
 function run_tests()
     @testset "Test Metrics" begin

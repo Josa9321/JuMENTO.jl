@@ -1,23 +1,23 @@
 <div align="center">
-<img src="https://github.com/Josa9321/jumento.jl/blob/main/images/Jumento.png" alt="Logo" width="250">
+<img src="https://github.com/Josa9321/JuMENTO.jl/blob/main/images/Jumento.png" alt="Logo" width="250">
 </div>
 
-# **jumento: Multi-Objective Optimization in Julia**
+# **JuMENTO: Multi-Objective Optimization in Julia**
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Julia](https://img.shields.io/badge/julia-v1.10+-blue.svg)](https://julialang.org/)
 [![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-`jumento.jl` is a Julia-based mathematical programming framework designed for **multi-objective optimization**. Built to integrate seamlessly with the [JuMP.dev](https://jump.dev/) ecosystem, it provides deterministic exact methods to generate, analyze, and visualize Pareto frontiers.
+JuMENTO is a Julia-based framework for **multi-objective optimization**, implementing two widely used families of methods:
 
-## 🚀 Key Features
+- **AUGMECON** and **AUGMECON 2** (Augmented ε-Constraint Method)
+<!-- - **NSGA-II** (Non-dominated Sorting Genetic Algorithm II) -->
 
-* **Exact Optimization Methods:** Native implementations of the Augmented $\epsilon$-Constraint family:
-    * `AUGMECON`
-    * `AUGMECON 2`
-    * `SAUGMECON`
-* **Quality Metrics:** Tools for evaluating and assessing the quality of computed Pareto Frontiers.
-* **Advanced Visualization:** Built-in support via the `MultiPlots` module to visualize high-dimensional objective spaces (2, 3, or more objectives) using interactive PlotlyJS charts (including Radar, Parallel Coordinates, and Scatter plots).
+It integrates seamlessly with [JuMP](https://jump.dev/) models and provides:
+
+- Exact optimization methods
+- Metrics for Pareto Frontier quality assessment
+- Tools for plotting Pareto Frontiers with 2 or more objectives
 
 ---
 
@@ -46,16 +46,16 @@ For installation, you can download directly from github as follows:
 
 ```julia
 using Pkg
-Pkg.add("jumento")
+Pkg.add(url="https://github.com/Josa9321/JuMENTO.jl")
 ```
-<!-- Pkg.add(url="https://github.com/Josa9321/jumento.jl") -->
+
 ---
 
 ## **How to Use**
 
 ### Build a Model
-To solve problems with jumento, you must first define a **JuMP** model (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/) and [Multiobjective Tutorial](https://jump.dev/JuMP.jl/stable/tutorials/linear/multi_objective_knapsack/)).
-Below is an example showing how to build a model for use with jumento:
+To solve problems with JuMENTO, you must first define a **JuMP** model (see [JuMP Documentation](https://jump.dev/JuMP.jl/stable/) and [Multiobjective Tutorial](https://jump.dev/JuMP.jl/stable/tutorials/linear/multi_objective_knapsack/)).
+Below is an example showing how to build a model for use with JuMENTO:
 
 ```julia
 
@@ -63,7 +63,7 @@ using JuMP, HiGHS
 
 import MultiObjectiveAlgorithms as MOA
 
-using jumento
+using JuMENTO
 
 model = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
 
@@ -162,26 +162,26 @@ Solve the model above, its only necessary to call `optimize!`. For additional de
 
 ## Evaluating Frontiers
 
-To evaluate the quality of the obtained Pareto frontiers, you can use the plotting and metrics tools provided by jumento. These tools allow you to visualize the trade-offs between objectives and quantitatively assess the performance of different algorithms.
+To evaluate the quality of the obtained Pareto frontiers, you can use the plotting and metrics tools provided by JuMENTO. These tools allow you to visualize the trade-offs between objectives and quantitatively assess the performance of different algorithms.
 
 Its important to clarify that the methods implemented here assume the frontier set $F$ is a $m × n$ matrix, where each of the $m$ rows corresponds to an specific objective, and each of the $n$ solutions is represented by a column.
 
 ### Plot Results
 This module leverages `PlotlyJS.jl` to generate interactive visualizations of Pareto frontiers.
 
-The `jumento.MultiPlots` module provides a suite of plotting functions designed to analyze objective space trade-offs. The implemented visualization types include:
+The `JuMENTO.MultiPlots` module provides a suite of plotting functions designed to analyze objective space trade-offs. The implemented visualization types include:
  - Scatter plots (2 to 3 objectives);
  - Parallel coordinate plots;
  - Radar charts (Spider plots);
  - Level diagrams.
 
-The following sections show how to use some of the plotting functions defined in the `jumento.MultiPlots` module.
+The following sections show how to use some of the plotting functions defined in the `JuMENTO.MultiPlots` module.
 For a comprehensive technical overview of specific parameters, please refer to the internal documentation for each function.
 
 #### Radar Charts
 
 ```julia
-using jumento
+using JuMENTO
 
 frontier_set = [
     7 4 2;
@@ -206,7 +206,7 @@ This visualization enables quantitative evaluation of product performance profil
 #### Parallel Coordinate Plots
 
 ```julia
-using jumento
+using JuMENTO
 
 frontier_set = [
     1 2 3 4 5 6 7 8 9 10.0;
@@ -228,7 +228,7 @@ The resulting figure would look like this:
 #### Scatter Plots
 
 ```julia
-using jumento
+using JuMENTO
 
 v1 = [92.0 50.0 2.0 7.0 91.0; 20.0 91.0 100.0 97.0 81.0]
 v2 = [10 45 81 91 93; 99 94 91 81 30]
@@ -247,7 +247,7 @@ The resulting figure would look like this:
 #### Level Diagrams
 
 ```julia
-using jumento
+using JuMENTO
 
 cats = ["Profit", "Quality", "Costs"]
 names = ["NSGA-2", "NSGA-3", "AUGMECON-2"]
@@ -271,7 +271,7 @@ The resulting figure would look like this:
 
 To compare the performance of different algorithms, specific multiobjective metrics are used to assess the quality of the solution sets obtained. This assessment typically considers aspects such as the dispersion of solutions and their distance from the Pareto frontier.
 
-The jumento repository includes the implementation of common multi-objective metrics:
+The JuMENTO repository includes the implementation of common multi-objective metrics:
 
 - **Spacing (SP)**
   Measures the variation in distances between each solution in the evaluated set and its nearest neighbor in the reference set. Smaller values are desirable.
@@ -287,7 +287,7 @@ The jumento repository includes the implementation of common multi-objective met
 The metrics can be applied by calling their respective functions, as shown below:
 
 ```julia
-using jumento: Metrics
+using JuMENTO: Metrics
 
 frontier_set = [3 6 9; 15 9 4.0]
 reference_set = [1 2 3 4 5 6 7 8 9 10; 10 9 8 7 6 5 4 3 2 1.0]

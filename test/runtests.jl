@@ -1,8 +1,8 @@
 using Test, Aqua
 
-using jumento
+using JuMENTO
 
-Aqua.test_all(jumento)
+Aqua.test_all(JuMENTO)
 
 include("test_metrics.jl")
 include("methods/test_augmecon.jl")
