@@ -1,7 +1,7 @@
 name = "JuMENTO"
 uuid = "78705326-e6c4-40ef-a028-b98696ee36e4"
-authors = ["Josa Ferreira"]
 version = "0.5.0"
+authors = ["Josa Ferreira"]
 
 [deps]
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -29,7 +29,7 @@ Random = "1.10.0"
 Revise = "3.13.2"
 Statistics = "1.10.0"
 Test = "1.10.0"
-XLSX = "0.10.4"
+XLSX = "0.10.4, 0.11"
 julia = "1"
 
 [extras]
