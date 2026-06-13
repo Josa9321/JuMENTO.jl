@@ -46,7 +46,7 @@ For installation, you can download directly from github as follows:
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/Josa9321/JuMENTO.jl")
+Pkg.add("JuMENTO")
 ```
 
 ---
